@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_expense/models/Transaction.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class CardPage extends StatefulWidget {
@@ -12,14 +15,16 @@ class CardPage extends StatefulWidget {
 class _CardPageState extends State<CardPage> {
   Widget getCard() {
     return Card(
+      elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       color: Colors.white,
-      margin: EdgeInsets.all(5),
+      margin: EdgeInsets.all(10),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,6 +54,7 @@ class _CardPageState extends State<CardPage> {
             SizedBox(height: 5),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
@@ -110,8 +116,9 @@ class _CardPageState extends State<CardPage> {
                 ),
                 SizedBox(width: 20),
                 Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1,
+                  child: SizedBox(
+                    height: 140,
+                    width: 140,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -181,13 +188,30 @@ class _CardPageState extends State<CardPage> {
     );
   }
 
+  List<Transaction> transactions = [
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
+    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
+  ];
+
   @override
   Widget build(BuildContext context) {
     PageController pageController = PageController();
     return Scaffold(
+      // appBar: AppBar(
+      //   actions: [
+      //     IconButton(onPressed: () {}, icon: Icon(Icons.more_vert_outlined)),
+      //   ],
+      // ),
       body: SafeArea(
         minimum: EdgeInsets.fromLTRB(10, 10, 10, 0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 40),
             Row(
@@ -220,17 +244,75 @@ class _CardPageState extends State<CardPage> {
               ),
             ),
             SizedBox(height: 10),
-            SmoothPageIndicator(
-              controller: pageController,
-              count: 2,
-              effect: WormEffect(
-                dotColor: const Color.fromARGB(255, 104, 104, 104),
-                activeDotColor: Colors.white,
-                dotHeight: 8,
-                dotWidth: 8,
+            Center(
+              child: SmoothPageIndicator(
+                controller: pageController,
+                count: 2,
+                effect: WormEffect(
+                  dotColor: const Color.fromARGB(255, 104, 104, 104),
+                  activeDotColor: Theme.of(context).primaryColor,
+                  dotHeight: 8,
+                  dotWidth: 8,
+                ),
               ),
             ),
-            Expanded(child: Center(child: Text("hello"))),
+            SizedBox(height: 20),
+            Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Text(
+                "Recent Transactions",
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: transactions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    onTap: () {},
+                    title: Text(
+                      transactions[index].merchant,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      transactions[index].category,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Rs.${transactions[index].amount}",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(transactions[index].date),
+                      ],
+                    ),
+                    leading: Transform.rotate(
+                      angle:
+                          (45 + (transactions[index].isCredit ? 180 : 0)) *
+                          math.pi /
+                          180,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: transactions[index].isCredit
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

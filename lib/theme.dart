@@ -6,6 +6,7 @@ final ThemeData lightTheme = ThemeData(
   textTheme: GoogleFonts.openSansTextTheme(),
   brightness: Brightness.light,
   primarySwatch: Colors.blue,
+  primaryColor: Colors.black,
   scaffoldBackgroundColor: Colors.white,
   appBarTheme: AppBarTheme(
     backgroundColor: Colors.blue,
@@ -14,7 +15,17 @@ final ThemeData lightTheme = ThemeData(
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: Colors.white,
     selectedItemColor: Colors.black,
-    unselectedItemColor: Colors.black12,
+    unselectedItemColor: Colors.grey[500],
+  ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return Colors.black;
+      return Colors.white;
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return Colors.grey;
+      return Colors.black;
+    }),
   ),
 );
 
@@ -33,5 +44,15 @@ final ThemeData darkTheme = ThemeData(
     backgroundColor: Colors.black,
     selectedItemColor: Colors.white,
     unselectedItemColor: Colors.grey[800],
+  ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return Colors.black;
+      return Colors.grey;
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) return Colors.white;
+      return Colors.grey[300];
+    }),
   ),
 );

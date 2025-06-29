@@ -7,9 +7,9 @@ void main() {
   runApp(App());
 }
 
-class App extends StatelessWidget {
-  final ThemeController themeController = ThemeController();
+final ThemeController themeController = ThemeController();
 
+class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
