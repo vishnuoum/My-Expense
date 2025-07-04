@@ -12,7 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedPage = 3;
+  int _selectedPage = 0;
 
   void updateActivePage(int index) {
     setState(() {

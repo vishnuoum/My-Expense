@@ -1,8 +1,11 @@
+import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:my_expense/main.dart';
 import 'package:my_expense/models/Transaction.dart';
+import 'package:my_expense/services/card_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class CardPage extends StatefulWidget {
@@ -13,6 +16,19 @@ class CardPage extends StatefulWidget {
 }
 
 class _CardPageState extends State<CardPage> {
+  CardService cardService = CardService(dbService: dbService);
+
+  @override
+  void initState() {
+    super.initState();
+    init();
+  }
+
+  void init() async {
+    log("fetching card details");
+    await cardService.getAllCardDetails();
+  }
+
   Widget getCard() {
     return Card(
       elevation: 5,
@@ -213,7 +229,7 @@ class _CardPageState extends State<CardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 40),
+            SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -223,7 +239,9 @@ class _CardPageState extends State<CardPage> {
                   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    await Navigator.pushNamed(context, "/addCard");
+                  },
                   child: Text(
                     "+",
                     style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),

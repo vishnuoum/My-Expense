@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 final ThemeData lightTheme = ThemeData(
   useMaterial3: true,
-  textTheme: GoogleFonts.openSansTextTheme(),
   brightness: Brightness.light,
   primarySwatch: Colors.blue,
   primaryColor: Colors.black,
   scaffoldBackgroundColor: Colors.white,
   appBarTheme: AppBarTheme(
-    backgroundColor: Colors.blue,
-    foregroundColor: Colors.white,
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black,
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: Colors.white,
     selectedItemColor: Colors.black,
     unselectedItemColor: Colors.grey[500],
   ),
+  progressIndicatorTheme: ProgressIndicatorThemeData(color: Colors.black),
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) return Colors.black;
@@ -31,7 +30,6 @@ final ThemeData lightTheme = ThemeData(
 
 final ThemeData darkTheme = ThemeData(
   useMaterial3: true,
-  textTheme: GoogleFonts.openSansTextTheme(ThemeData.dark().textTheme),
   brightness: Brightness.dark,
   primarySwatch: Colors.blueGrey,
   primaryColor: Colors.white,
@@ -45,6 +43,7 @@ final ThemeData darkTheme = ThemeData(
     selectedItemColor: Colors.white,
     unselectedItemColor: Colors.grey[800],
   ),
+  progressIndicatorTheme: ProgressIndicatorThemeData(color: Colors.white),
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) return Colors.black;
