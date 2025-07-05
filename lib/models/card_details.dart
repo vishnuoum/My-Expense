@@ -2,8 +2,9 @@ import 'package:my_expense/entity/tbl_transaction.dart';
 
 class CardDetails {
   int id;
+  String cardNum;
   String cardName;
-  String cardLimit;
+  double cardLimit;
   double currentAmount;
   String nextBillDate;
   int daysToNextBill;
@@ -11,6 +12,7 @@ class CardDetails {
 
   CardDetails({
     required this.id,
+    required this.cardNum,
     required this.cardName,
     required this.cardLimit,
     required this.currentAmount,

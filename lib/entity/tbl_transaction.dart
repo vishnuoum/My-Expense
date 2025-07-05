@@ -19,6 +19,16 @@ class TblTransactions {
     required this.category,
   });
 
+  TblTransactions.headerInfo({
+    this.amount = 0,
+    required this.uniqueId,
+    required this.txnType,
+    this.isCredit = 0,
+    this.date = "",
+    this.merchant = "",
+    this.category = "",
+  });
+
   Map<String, dynamic> getMap() {
     return {
       "id": id,

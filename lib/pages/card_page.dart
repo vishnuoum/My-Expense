@@ -3,9 +3,12 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
-import 'package:my_expense/models/Transaction.dart';
-import 'package:my_expense/services/card_service.dart';
+import 'package:my_expense/models/card_details.dart';
+import 'package:my_expense/models/response.dart';
+import 'package:my_expense/services/alert_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class CardPage extends StatefulWidget {
@@ -16,20 +19,98 @@ class CardPage extends StatefulWidget {
 }
 
 class _CardPageState extends State<CardPage> {
-  CardService cardService = CardService(dbService: dbService);
+  ScrollController scrollController = ScrollController();
+  PageController pageController = PageController();
+  List<CardDetails> cardDetailsList = [];
+  List<TblTransactions> txnList = [];
+  bool isFabVisible = false;
+
+  Map<String, double> scrollOffset = {};
+
+  int txnListIndex = 0;
 
   @override
   void initState() {
-    super.initState();
+    pageController.addListener(() {
+      if (pageController.page?.remainder(1) == 0) {
+        int page = pageController.page?.toInt() as int;
+        if (txnListIndex != page) {
+          if (scrollController.hasClients) {
+            scrollOffset[cardDetailsList[txnListIndex].cardNum] =
+                scrollController.offset;
+          }
+          txnListIndex = page;
+          log("current card index: $txnListIndex");
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (scrollController.hasClients) {
+              scrollController.animateTo(
+                scrollOffset[cardDetailsList[txnListIndex].cardNum] ?? 0,
+                duration: Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              );
+            }
+          });
+          setState(() {
+            txnList = cardDetailsList[txnListIndex].txns;
+          });
+        }
+      }
+    });
+
+    scrollController.addListener(() {
+      if (scrollController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
+        // scrolling down
+        if (isFabVisible) {
+          setState(() => isFabVisible = false);
+        }
+      } else if (scrollController.position.userScrollDirection ==
+              ScrollDirection.forward ||
+          scrollController.position.atEdge && scrollController.offset == 0) {
+        // scrolling up or at the top
+        if (!isFabVisible) {
+          setState(() => isFabVisible = true);
+        }
+      }
+    });
+
     init();
+    super.initState();
   }
 
   void init() async {
-    log("fetching card details");
-    await cardService.getAllCardDetails();
+    log("fetching card details ${DateTime.now()}");
+    Response cardDetailsResponse = await cardService.getAllCardDetails();
+    if (cardDetailsResponse.isException) {
+      AlertService.singleButtonAlertDialog(
+        "Error while getching card details",
+        true,
+        context,
+        () {
+          Navigator.pop(context);
+        },
+      );
+    } else {
+      cardDetailsList = (cardDetailsResponse.responseBody as List<CardDetails>);
+      cardDetailsList.forEach(
+        (card) => scrollOffset.putIfAbsent(card.cardNum, () => 0),
+      );
+      setState(() {
+        if (cardDetailsList.isNotEmpty &&
+            txnListIndex < cardDetailsList.length) {
+          txnList = cardDetailsList[txnListIndex].txns;
+          if (scrollController.hasClients) {
+            scrollController.jumpTo(
+              scrollOffset[cardDetailsList[txnListIndex].cardNum] ?? 0,
+            );
+          }
+        }
+        isFabVisible = cardDetailsList.isNotEmpty;
+      });
+    }
   }
 
-  Widget getCard() {
+  Widget getCard(CardDetails cardDetails) {
     return Card(
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -46,7 +127,7 @@ class _CardPageState extends State<CardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "HDFC Millennia Credit",
+                  "${cardDetails.cardName} (*${cardDetails.cardNum})",
                   style: TextStyle(
                     fontSize: 15,
                     color: Colors.black,
@@ -86,7 +167,7 @@ class _CardPageState extends State<CardPage> {
                         ),
                       ),
                       Text(
-                        "Rs. 16,000.00",
+                        "Rs.${cardDetails.currentAmount.toStringAsFixed(2)}",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w700,
@@ -95,7 +176,7 @@ class _CardPageState extends State<CardPage> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        "Total Amount",
+                        "Total Limit",
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontWeight: FontWeight.bold,
@@ -103,7 +184,7 @@ class _CardPageState extends State<CardPage> {
                         ),
                       ),
                       Text(
-                        "Rs. 1,44,000.00",
+                        "Rs.${cardDetails.cardLimit.toStringAsFixed(2)}",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
@@ -120,7 +201,7 @@ class _CardPageState extends State<CardPage> {
                         ),
                       ),
                       Text(
-                        "22/02/2025",
+                        "${cardDetails.nextBillDate} (${cardDetails.daysToNextBill} days left)",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
@@ -204,26 +285,33 @@ class _CardPageState extends State<CardPage> {
     );
   }
 
-  List<Transaction> transactions = [
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    PageController pageController = PageController();
     return Scaffold(
-      // appBar: AppBar(
-      //   actions: [
-      //     IconButton(onPressed: () {}, icon: Icon(Icons.more_vert_outlined)),
-      //   ],
-      // ),
+      floatingActionButton: AnimatedSlide(
+        duration: Duration(milliseconds: 200),
+        offset: isFabVisible ? Offset.zero : Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: Duration(milliseconds: 200),
+          opacity: isFabVisible ? 1.0 : 0.0,
+          child: FloatingActionButton.extended(
+            onPressed: () async {
+              await Navigator.pushNamed(
+                context,
+                "/addTxn",
+                arguments: TblTransactions.headerInfo(
+                  uniqueId: cardDetailsList[txnListIndex].cardNum,
+                  txnType: "card",
+                ),
+              );
+              init();
+            },
+            tooltip: "Add Transaction",
+            icon: Icon(Icons.add),
+            label: Text("Add Transaction"),
+          ),
+        ),
+      ),
       body: SafeArea(
         minimum: EdgeInsets.fromLTRB(10, 10, 10, 0),
         child: Column(
@@ -241,6 +329,7 @@ class _CardPageState extends State<CardPage> {
                 TextButton(
                   onPressed: () async {
                     await Navigator.pushNamed(context, "/addCard");
+                    init();
                   },
                   child: Text(
                     "+",
@@ -252,20 +341,36 @@ class _CardPageState extends State<CardPage> {
             SizedBox(height: 20),
             SizedBox(
               height: 225,
-              child: LayoutBuilder(
-                builder: (context, constraints) => PageView.builder(
-                  controller: pageController,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 2,
-                  itemBuilder: (context, index) => getCard(),
-                ),
-              ),
+              child: cardDetailsList.isEmpty
+                  ? Card(
+                      color: themeController.value == ThemeMode.dark
+                          ? Colors.grey[900]
+                          : Colors.grey[300],
+                      child: Center(
+                        child: Text(
+                          "No cards to display",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    )
+                  : LayoutBuilder(
+                      builder: (context, constraints) => PageView.builder(
+                        controller: pageController,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: cardDetailsList.length,
+                        itemBuilder: (context, index) =>
+                            getCard(cardDetailsList[index]),
+                      ),
+                    ),
             ),
             SizedBox(height: 10),
             Center(
               child: SmoothPageIndicator(
                 controller: pageController,
-                count: 2,
+                count: cardDetailsList.length,
                 effect: WormEffect(
                   dotColor: const Color.fromARGB(255, 104, 104, 104),
                   activeDotColor: Theme.of(context).primaryColor,
@@ -287,49 +392,106 @@ class _CardPageState extends State<CardPage> {
             ),
             SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: transactions.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    onTap: () {},
-                    title: Text(
-                      transactions[index].merchant,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      transactions[index].category,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Rs.${transactions[index].amount}",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+              child: txnList.isEmpty
+                  ? Center(
+                      child: Text(
+                        "No recent transactions",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
                         ),
-                        Text(transactions[index].date),
-                      ],
-                    ),
-                    leading: Transform.rotate(
-                      angle:
-                          (45 + (transactions[index].isCredit ? 180 : 0)) *
-                          math.pi /
-                          180,
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        color: transactions[index].isCredit
-                            ? Colors.green
-                            : Colors.red,
                       ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      padding: EdgeInsets.only(bottom: 60),
+                      shrinkWrap: true,
+                      itemCount: txnList.length,
+                      itemBuilder: (context, index) {
+                        return ExpansionTile(
+                          title: Text(
+                            txnList[index].merchant,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            txnList[index].category,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "Rs.${txnList[index].amount.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(txnList[index].date),
+                            ],
+                          ),
+                          leading: Transform.rotate(
+                            angle:
+                                (45 +
+                                    (txnList[index].isCredit == 1 ? 180 : 0)) *
+                                math.pi /
+                                180,
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              color: txnList[index].isCredit == 1
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+
+                          children: [
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    await Navigator.pushNamed(
+                                      context,
+                                      "/addTxn",
+                                      arguments: txnList[index],
+                                    );
+                                    setState(() {});
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.edit, size: 22),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "Edit",
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {},
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.delete, size: 22),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "Delete",
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

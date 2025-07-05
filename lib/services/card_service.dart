@@ -10,19 +10,25 @@ class CardService {
 
   CardService({required this.dbService});
 
+  Future<bool> addCard(TblCards card) async {
+    return await dbService.addCard(card);
+  }
+
   Future<Response> getAllCardDetails() async {
     Response cardResponse = await dbService.getAllCards();
     if (cardResponse.isException) return cardResponse;
 
     List<CardDetails> cardDetails = await Future.wait(
       (cardResponse.responseBody as List<TblCards>).map((card) async {
+        DateTime nextBillDate = getNextBillDate(card.billDay);
         return CardDetails(
           id: card.id!,
+          cardNum: card.cardNo,
           cardName: card.cardName,
           cardLimit: card.cardLimit,
           currentAmount: 0,
-          nextBillDate: getNextBillDate(card.billDay),
-          daysToNextBill: 0,
+          nextBillDate: DateFormat("dd/MM/yyyy").format(nextBillDate),
+          daysToNextBill: nextBillDate.difference(DateTime.now()).inDays,
         );
       }).toList(),
     );
@@ -30,6 +36,7 @@ class CardService {
     for (CardDetails cardDetail in cardDetails) {
       Response txnResponse = await dbService.getTxnDetails(
         "card",
+        cardDetail.cardNum,
         getPreviousDate(cardDetail.nextBillDate),
       );
       if (txnResponse.isException) continue;
@@ -40,18 +47,19 @@ class CardService {
     return Response.success(responseBody: cardDetails);
   }
 
-  String getNextBillDate(int billDay) {
-    DateTime current = DateTime.now();
+  DateTime getNextBillDate(int billDay) {
+    DateTime now = DateTime.now();
+    DateTime current = DateTime(now.year, now.month, now.day);
     DateTime billDate = DateTime(current.year, current.month, billDay);
     if (billDate.isBefore(current)) {
       billDate = billDate.add(Duration(days: 30));
       billDate = DateTime(billDate.year, billDate.month, billDay);
     }
-    return DateFormat("dd/mm/yyyy").format(billDate);
+    return billDate;
   }
 
   String getPreviousDate(String date) {
-    DateTime currBillDate = DateFormat("dd/mm/yyyy").parse(date);
+    DateTime currBillDate = DateFormat("dd/MM/yyyy").parse(date);
     DateTime prevBillDate = currBillDate.subtract(Duration(days: 30));
     prevBillDate = DateTime(
       prevBillDate.year,
@@ -72,4 +80,8 @@ class CardService {
     }
     return amount;
   }
+
+  // double getCurrentUtilization(String cardNum) {
+
+  // }
 }

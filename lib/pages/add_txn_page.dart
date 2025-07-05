@@ -1,26 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:my_expense/entity/tbl_card.dart';
+import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/services/alert_service.dart';
 
-class AddCardPage extends StatefulWidget {
-  const AddCardPage({super.key});
+class AddTxnPage extends StatefulWidget {
+  final TblTransactions transactionDetails;
+  const AddTxnPage({super.key, required this.transactionDetails});
 
   @override
-  State<AddCardPage> createState() => _AddCardPageState();
+  State<AddTxnPage> createState() => _AddTxnPageState();
 }
 
-class _AddCardPageState extends State<AddCardPage> {
+class _AddTxnPageState extends State<AddTxnPage> {
   final formKey = GlobalKey<FormState>();
   DateTime selectedDate = DateTime.now();
   DateFormat dateFormat = DateFormat("dd/MM/yyyy");
-  TextEditingController billDate = TextEditingController(
-    text: DateFormat("dd/MM/yyyy").format(DateTime.now()),
-  );
-  TextEditingController cardLimit = TextEditingController(text: "");
-  TextEditingController cardName = TextEditingController(text: "");
-  TextEditingController cardNo = TextEditingController(text: "");
+  late TextEditingController billDate;
+  late TextEditingController category;
+  late TextEditingController amount;
+  late TextEditingController merchant;
+
+  late TblTransactions transactionDetails;
+
+  @override
+  void initState() {
+    transactionDetails = widget.transactionDetails;
+    billDate = TextEditingController(
+      text: transactionDetails.date.isNotEmpty
+          ? dateFormat.format(
+              DateFormat("yyyy-MM-dd").parse(transactionDetails.date),
+            )
+          : dateFormat.format(DateTime.now()),
+    );
+    category = TextEditingController(text: transactionDetails.category);
+    amount = TextEditingController(
+      text: transactionDetails.amount == 0
+          ? ""
+          : transactionDetails.amount.toStringAsFixed(2),
+    );
+    merchant = TextEditingController(text: transactionDetails.merchant);
+    super.initState();
+  }
 
   Future<void> selectDate() async {
     selectedDate = (await showDatePicker(
@@ -73,7 +94,7 @@ class _AddCardPageState extends State<AddCardPage> {
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 25),
         children: [
           Text(
-            "Add Card",
+            "${transactionDetails.merchant.isEmpty ? "Add" : "Edit"} Transaction",
             style: TextStyle(
               color: Theme.of(context).primaryColor,
               fontWeight: FontWeight.bold,
@@ -86,65 +107,14 @@ class _AddCardPageState extends State<AddCardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Card Name"),
+                Text("Transaction Date"),
                 SizedBox(height: 10),
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: themeController.value == ThemeMode.dark
-                        ? Colors.grey[800]
-                        : Colors.grey[200],
-                  ),
-                  child: TextFormField(
-                    controller: cardName,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: "Enter Card name",
-                      hintStyle: TextStyle(color: Colors.grey[500]),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Text("Card no. (4 digits)"),
-                SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: themeController.value == ThemeMode.dark
-                        ? Colors.grey[800]
-                        : Colors.grey[200],
-                  ),
-                  child: TextFormField(
-                    controller: cardNo,
-                    maxLength: 4,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: "Enter Card no.",
-                      hintStyle: TextStyle(color: Colors.grey[500]),
-                    ),
-                    buildCounter:
-                        (
-                          BuildContext context, {
-                          required int currentLength,
-                          required bool isFocused,
-                          required int? maxLength,
-                        }) {
-                          return null; // Completely hides the counter widget
-                        },
-                  ),
-                ),
-                SizedBox(height: 15),
-                Text("Next Bill Date"),
-                SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: themeController.value == ThemeMode.dark
-                        ? Colors.grey[800]
+                        ? Colors.grey[900]
                         : Colors.grey[200],
                   ),
                   child: TextFormField(
@@ -161,22 +131,72 @@ class _AddCardPageState extends State<AddCardPage> {
                   ),
                 ),
                 SizedBox(height: 15),
-                Text("Card limit"),
+                Text("Amount"),
                 SizedBox(height: 10),
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: themeController.value == ThemeMode.dark
-                        ? Colors.grey[800]
+                        ? Colors.grey[900]
                         : Colors.grey[200],
                   ),
                   child: TextFormField(
-                    controller: cardLimit,
+                    controller: amount,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: "Enter Card limit",
+                      hintText: "Enter Transaction Amount",
+                      hintStyle: TextStyle(color: Colors.grey[500]),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 15),
+
+                Text("Merchant"),
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: themeController.value == ThemeMode.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
+                  ),
+                  child: TextFormField(
+                    controller: merchant,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Enter Merchant",
+                      hintStyle: TextStyle(color: Colors.grey[500]),
+                    ),
+                    buildCounter:
+                        (
+                          BuildContext context, {
+                          required int currentLength,
+                          required bool isFocused,
+                          required int? maxLength,
+                        }) {
+                          return null; // Completely hides the counter widget
+                        },
+                  ),
+                ),
+                SizedBox(height: 15),
+                Text("Category"),
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: themeController.value == ThemeMode.dark
+                        ? Colors.grey[900]
+                        : Colors.grey[200],
+                  ),
+                  child: TextFormField(
+                    controller: category,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Enter Category",
                       hintStyle: TextStyle(color: Colors.grey[500]),
                     ),
                   ),
@@ -186,14 +206,14 @@ class _AddCardPageState extends State<AddCardPage> {
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () async {
-                      String date = billDate.text;
-                      String limit = cardLimit.text;
-                      String name = cardName.text;
-                      String num = cardNo.text;
-                      if (date.isEmpty ||
-                          limit.isEmpty ||
-                          name.isEmpty ||
-                          num.isEmpty) {
+                      String txnDate = billDate.text;
+                      String txnCategory = category.text;
+                      String txnAmount = amount.text;
+                      String txnMerchant = merchant.text;
+                      if (txnDate.isEmpty ||
+                          txnCategory.isEmpty ||
+                          txnAmount.isEmpty ||
+                          txnMerchant.isEmpty) {
                         AlertService.singleButtonAlertDialog(
                           "Please complete the form",
                           true,
@@ -202,40 +222,37 @@ class _AddCardPageState extends State<AddCardPage> {
                             Navigator.pop(context);
                           },
                         );
-                      } else if (num.length != 4) {
+                      } else if (double.parse(txnAmount) <= 0) {
                         AlertService.singleButtonAlertDialog(
-                          "Please enter last 4 digits of your card number",
+                          "Please enter a valid amount",
                           true,
                           context,
-                          () {
-                            Navigator.pop(context);
-                          },
+                          () => Navigator.pop(context),
                         );
                       } else {
                         showLoading(context);
-                        TblCards card = TblCards(
-                          cardNo: num,
-                          cardName: name,
-                          cardLimit: double.parse(limit),
-                          billDay: DateFormat("dd/MM/yyyy").parse(date).day,
-                        );
-                        if (await cardService.addCard(card)) {
+                        transactionDetails.amount = double.parse(txnAmount);
+                        transactionDetails.category = txnCategory;
+                        transactionDetails.date = DateFormat(
+                          "yyyy-MM-dd",
+                        ).format(dateFormat.parse(txnDate));
+                        transactionDetails.merchant = txnMerchant;
+                        if (await transactionService.addTransaction(
+                          transactionDetails,
+                        )) {
                           Navigator.pop(context);
                           AlertService.singleButtonAlertDialog(
-                            "Card Added Successfully",
+                            "Transaction Added Successfully",
                             false,
                             context,
                             () {
-                              Navigator.popUntil(
-                                context,
-                                ModalRoute.withName('/home'),
-                              );
+                              Navigator.pop(context);
                             },
                           );
                         } else {
                           Navigator.pop(context);
                           AlertService.singleButtonAlertDialog(
-                            "Error while saving card. Try again",
+                            "Error while adding transaction. Try again",
                             true,
                             context,
                             () {
@@ -253,7 +270,7 @@ class _AddCardPageState extends State<AddCardPage> {
                       ),
                     ),
                     child: Text(
-                      "ADD",
+                      transactionDetails.merchant.isEmpty ? "ADD" : "UPDATE",
                       style: TextStyle(
                         color: Theme.of(context).scaffoldBackgroundColor,
                         fontWeight: FontWeight.bold,

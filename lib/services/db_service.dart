@@ -10,23 +10,26 @@ class DBService {
 
   Future<bool> initDB() async {
     try {
-      // var databasesPath = await getDatabasesPath();
-      // String path = "$databasesPath/transactions.db";
+      var databasesPath = await getDatabasesPath();
+      String path = "$databasesPath/transactions.db";
 
       // await deleteDatabase(path);
       database = await openDatabase(
-        inMemoryDatabasePath,
+        // inMemoryDatabasePath,
+        path,
         version: 1,
         onCreate: (Database db, int version) async {
           // When creating the db, create the table
+          log("Creating transactions table");
           await db.execute(
             """CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amount REAL,uniqueId TEXT,txnType TEXT, isDebit BOOLEAN, date TEXT,merchant TEXT,category TEXT);""",
+            amount REAL,uniqueId TEXT,txnType TEXT, isCredit BOOLEAN, date Date,merchant TEXT,category TEXT);""",
           );
 
+          log("Creating cards table");
           await db.execute(
             """CREATE TABLE IF NOT EXISTS cards (id INTEGER PRIMARY KEY AUTOINCREMENT,cardNo TEXT UNIQUE,
-            cardName TEXT,cardLimit TEXT,billDay INTEGER);""",
+            cardName TEXT,cardLimit REAL,billDay INTEGER);""",
           );
         },
       );
@@ -52,6 +55,20 @@ class DBService {
     }
   }
 
+  Future<bool> addTransaction(TblTransactions transaction) async {
+    try {
+      await database.insert(
+        "transactions",
+        transaction.getMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return true;
+    } catch (error) {
+      log("addTransaction() failed: $error");
+      return false;
+    }
+  }
+
   Future<Response> getAllCards() async {
     try {
       List<Map<String, dynamic>> maps = await database.query("cards");
@@ -64,11 +81,17 @@ class DBService {
     }
   }
 
-  Future<Response> getTxnDetails(String txnType, String date) async {
+  Future<Response> getTxnDetails(
+    String txnType,
+    String uniqueId,
+    String date,
+  ) async {
     try {
+      log("${await database.query("transactions")}");
       List<Map<String, dynamic>> maps = await database.query(
         "transactions",
-        where: "txnType = ? and date > ?",
+        where: "txnType = ? and uniqueId = ? and date > ?",
+        whereArgs: [txnType, uniqueId, date],
       );
       log("getTxnDetails: $maps");
       List<TblTransactions> txns = maps

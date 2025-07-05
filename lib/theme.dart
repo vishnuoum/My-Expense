@@ -26,6 +26,17 @@ final ThemeData lightTheme = ThemeData(
       return Colors.black;
     }),
   ),
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    backgroundColor: Colors.black,
+    foregroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadiusGeometry.circular(50),
+    ),
+  ),
+  expansionTileTheme: ExpansionTileThemeData(
+    collapsedBackgroundColor: Colors.white,
+    backgroundColor: Colors.grey[200],
+  ),
 );
 
 final ThemeData darkTheme = ThemeData(
@@ -53,5 +64,16 @@ final ThemeData darkTheme = ThemeData(
       if (states.contains(WidgetState.selected)) return Colors.white;
       return Colors.grey[300];
     }),
+  ),
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadiusGeometry.circular(50),
+    ),
+  ),
+  expansionTileTheme: ExpansionTileThemeData(
+    collapsedBackgroundColor: Colors.black,
+    backgroundColor: Colors.grey[900],
   ),
 );

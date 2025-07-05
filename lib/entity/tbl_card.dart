@@ -2,7 +2,7 @@ class TblCards {
   int? id;
   String cardNo;
   String cardName;
-  String cardLimit;
+  double cardLimit;
   int billDay;
 
   TblCards({

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:my_expense/models/Transaction.dart';
+import 'package:my_expense/models/transaction.dart';
 
 class CashPage extends StatefulWidget {
   const CashPage({super.key});
