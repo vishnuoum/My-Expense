@@ -41,17 +41,28 @@ class DBService {
     }
   }
 
-  Future<bool> addCard(TblCards card) async {
+  Future<Response> addCard(TblCards card) async {
     try {
-      await database.insert(
+      final existing = await database.query(
+        "cards",
+        where: "cardNo = ?",
+        whereArgs: [card.cardNo],
+      );
+      if (existing.isNotEmpty) {
+        if (card.id != existing.first["id"]) {
+          log("duplicate card No.");
+          return Response.error();
+        }
+      }
+      int id = await database.insert(
         "cards",
         card.getMap(),
-        conflictAlgorithm: ConflictAlgorithm.rollback,
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      return true;
+      return Response.success(responseBody: id);
     } catch (error) {
       log("addCard() failed: $error");
-      return false;
+      return Response.error();
     }
   }
 
@@ -87,7 +98,6 @@ class DBService {
     String date,
   ) async {
     try {
-      log("${await database.query("transactions")}");
       List<Map<String, dynamic>> maps = await database.query(
         "transactions",
         where: "txnType = ? and uniqueId = ? and date > ?",
@@ -101,6 +111,32 @@ class DBService {
     } catch (error) {
       log("Error while fetching cards $error");
       return Response.error();
+    }
+  }
+
+  Future<Response> getTotalPending(String cardNum) async {
+    try {
+      List<Map<String, dynamic>> result = await database.rawQuery(
+        """Select (Coalesce((Select sum(amount) from transactions where uniqueId = ? and txnType = 'card'  and isCredit = 0), 0.0) - 
+        Coalesce((Select sum(amount) from transactions where uniqueId = ? and txnType = 'card' and isCredit = 1), 0.0)) as totalPendingCreditAmount""",
+        [cardNum, cardNum],
+      );
+      return Response.success(
+        responseBody: result[0]["totalPendingCreditAmount"],
+      );
+    } catch (error) {
+      log("Error while fetching usage: $error");
+      return Response.error();
+    }
+  }
+
+  Future<bool> deleteCard(int cardId) async {
+    try {
+      await database.delete("cards", where: "id = ?", whereArgs: [cardId]);
+      return true;
+    } catch (error) {
+      log("Error while deleting card");
+      return false;
     }
   }
 }

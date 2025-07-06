@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_card.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
@@ -10,7 +12,7 @@ class CardService {
 
   CardService({required this.dbService});
 
-  Future<bool> addCard(TblCards card) async {
+  Future<Response> addCard(TblCards card) async {
     return await dbService.addCard(card);
   }
 
@@ -28,6 +30,7 @@ class CardService {
           cardLimit: card.cardLimit,
           currentAmount: 0,
           nextBillDate: DateFormat("dd/MM/yyyy").format(nextBillDate),
+          billDay: card.billDay,
           daysToNextBill: nextBillDate.difference(DateTime.now()).inDays,
         );
       }).toList(),
@@ -42,6 +45,11 @@ class CardService {
       if (txnResponse.isException) continue;
       cardDetail.txns = (txnResponse.responseBody as List<TblTransactions>);
       cardDetail.currentAmount = getCurrentAmount(cardDetail.txns);
+
+      cardDetail.creditUsage = await getCreditUsage(
+        cardDetail.cardNum,
+        cardDetail.cardLimit,
+      );
     }
 
     return Response.success(responseBody: cardDetails);
@@ -81,7 +89,18 @@ class CardService {
     return amount;
   }
 
-  // double getCurrentUtilization(String cardNum) {
+  Future<double> getCreditUsage(String cardNum, double cardLimit) async {
+    Response response = await dbService.getTotalPending(cardNum);
+    if (!response.isException) {
+      double pending = response.responseBody as double;
+      if (pending <= 0) return 0;
+      double usage = (pending / cardLimit) * 100;
+      return math.min(usage, 100);
+    }
+    return 0;
+  }
 
-  // }
+  Future<bool> deleteCard(int cardId) async {
+    return await dbService.deleteCard(cardId);
+  }
 }

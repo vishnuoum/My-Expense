@@ -206,10 +206,10 @@ class _AddTxnPageState extends State<AddTxnPage> {
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () async {
-                      String txnDate = billDate.text;
-                      String txnCategory = category.text;
-                      String txnAmount = amount.text;
-                      String txnMerchant = merchant.text;
+                      String txnDate = billDate.text.trim();
+                      String txnCategory = category.text.trim();
+                      String txnAmount = amount.text.trim();
+                      String txnMerchant = merchant.text.trim();
                       if (txnDate.isEmpty ||
                           txnCategory.isEmpty ||
                           txnAmount.isEmpty ||
@@ -230,6 +230,7 @@ class _AddTxnPageState extends State<AddTxnPage> {
                           () => Navigator.pop(context),
                         );
                       } else {
+                        bool isEdit = transactionDetails.merchant.isNotEmpty;
                         showLoading(context);
                         transactionDetails.amount = double.parse(txnAmount);
                         transactionDetails.category = txnCategory;
@@ -242,17 +243,23 @@ class _AddTxnPageState extends State<AddTxnPage> {
                         )) {
                           Navigator.pop(context);
                           AlertService.singleButtonAlertDialog(
-                            "Transaction Added Successfully",
+                            "Transaction ${isEdit ? "Updated" : "Added"} Successfully",
                             false,
                             context,
                             () {
                               Navigator.pop(context);
+                              if (isEdit) {
+                                Navigator.popUntil(
+                                  context,
+                                  ModalRoute.withName('/home'),
+                                );
+                              }
                             },
                           );
                         } else {
                           Navigator.pop(context);
                           AlertService.singleButtonAlertDialog(
-                            "Error while adding transaction. Try again",
+                            "Error while ${isEdit ? "updating" : "adding"} transaction. Try again",
                             true,
                             context,
                             () {

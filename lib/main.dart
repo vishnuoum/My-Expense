@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
+import 'package:my_expense/models/card_details.dart';
 import 'package:my_expense/pages/add_card_page.dart';
 import 'package:my_expense/pages/add_txn_page.dart';
 import 'package:my_expense/pages/home_page.dart';
@@ -30,7 +31,10 @@ class App extends StatelessWidget {
           darkTheme: darkTheme,
           themeMode: mode,
           routes: {
-            '/addCard': (context) => AddCardPage(),
+            '/addCard': (context) => AddCardPage(
+              cardDetails:
+                  ModalRoute.of(context)!.settings.arguments as CardDetails,
+            ),
             '/addTxn': (context) => AddTxnPage(
               transactionDetails:
                   ModalRoute.of(context)!.settings.arguments as TblTransactions,

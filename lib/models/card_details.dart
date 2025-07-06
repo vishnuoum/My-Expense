@@ -1,13 +1,15 @@
 import 'package:my_expense/entity/tbl_transaction.dart';
 
 class CardDetails {
-  int id;
+  late int id;
   String cardNum;
   String cardName;
   double cardLimit;
   double currentAmount;
   String nextBillDate;
+  int billDay;
   int daysToNextBill;
+  double creditUsage;
   late List<TblTransactions> txns;
 
   CardDetails({
@@ -17,6 +19,8 @@ class CardDetails {
     required this.cardLimit,
     required this.currentAmount,
     required this.nextBillDate,
+    required this.billDay,
+    this.creditUsage = 0,
     required this.daysToNextBill,
   });
 }

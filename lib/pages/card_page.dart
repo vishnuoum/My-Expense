@@ -8,6 +8,7 @@ import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/models/card_details.dart';
 import 'package:my_expense/models/response.dart';
+import 'package:my_expense/scroll_behavior/stretch_scroll_behavior.dart';
 import 'package:my_expense/services/alert_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -140,8 +141,43 @@ class _CardPageState extends State<CardPage> {
                     // Define the menu items in a function
                     return <PopupMenuEntry<Widget>>[
                       // Add PopupMenuItem or PopupMenuItemBuilder entries here
-                      PopupMenuItem<Widget>(child: Text('Edit')),
-                      PopupMenuItem<Widget>(child: Text('Remove')),
+                      PopupMenuItem<Widget>(
+                        child: Text('Edit'),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            "/addCard",
+                            arguments: cardDetailsList[txnListIndex],
+                          );
+                          setState(() {});
+                        },
+                      ),
+                      PopupMenuItem<Widget>(
+                        child: Text('Remove'),
+                        onTap: () async {
+                          if (await dbService.deleteCard(
+                            cardDetailsList[txnListIndex].id,
+                          )) {
+                            AlertService.singleButtonAlertDialog(
+                              "Successfully deleted the card",
+                              true,
+                              context,
+                              () => Navigator.pop(context),
+                            );
+                            cardDetailsList.removeAt(txnListIndex);
+                            setState(() {
+                              txnListIndex = 0;
+                            });
+                          } else {
+                            AlertService.singleButtonAlertDialog(
+                              "Error while deleteing card",
+                              true,
+                              context,
+                              () => Navigator.pop(context),
+                            );
+                          }
+                        },
+                      ),
                       // ... add more menu items
                     ];
                   },
@@ -219,7 +255,7 @@ class _CardPageState extends State<CardPage> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        PieChart(getPieChart()),
+                        PieChart(getPieChart(cardDetails.creditUsage)),
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -253,7 +289,7 @@ class _CardPageState extends State<CardPage> {
     );
   }
 
-  PieChartData getPieChart() {
+  PieChartData getPieChart(double usage) {
     return PieChartData(
       sectionsSpace: 5,
       centerSpaceRadius: 45,
@@ -261,24 +297,26 @@ class _CardPageState extends State<CardPage> {
       sections: [
         PieChartSectionData(
           color: Colors.grey,
-          value: 84,
-          title: '84%',
-          showTitle: true,
+          value: 100 - usage,
+          title: '${(100 - usage).toStringAsFixed(1)}%',
+          showTitle: usage < 90,
           radius: 30,
           titleStyle: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 9,
           ),
         ),
         PieChartSectionData(
           color: Colors.black,
-          value: 5,
-          title: '5%',
-          showTitle: false,
+          value: usage,
+          title: '${usage.toStringAsFixed(1)}%',
+          showTitle: usage > 10,
           radius: 30,
           titleStyle: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 9,
           ),
         ),
       ],
@@ -328,8 +366,29 @@ class _CardPageState extends State<CardPage> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await Navigator.pushNamed(context, "/addCard");
-                    init();
+                    final result = await Navigator.pushNamed(
+                      context,
+                      "/addCard",
+                      arguments: CardDetails(
+                        id: -1,
+                        cardNum: "",
+                        cardName: "",
+                        cardLimit: 0,
+                        billDay: 0,
+                        currentAmount: 0,
+                        nextBillDate: "",
+                        daysToNextBill: 0,
+                      ),
+                    );
+                    if (null != result && result is CardDetails) {
+                      CardDetails cardDetailsFromForm = result;
+                      if (cardDetailsFromForm.cardNum.isNotEmpty) {
+                        cardDetailsFromForm.txns = <TblTransactions>[];
+                        setState(() {
+                          cardDetailsList.add(cardDetailsFromForm);
+                        });
+                      }
+                    }
                   },
                   child: Text(
                     "+",
@@ -358,6 +417,10 @@ class _CardPageState extends State<CardPage> {
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) => PageView.builder(
+                        scrollBehavior: StretchScrollBehavior(),
+                        physics: ClampingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
                         controller: pageController,
                         scrollDirection: Axis.horizontal,
                         itemCount: cardDetailsList.length,
@@ -453,12 +516,23 @@ class _CardPageState extends State<CardPage> {
                               children: [
                                 GestureDetector(
                                   onTap: () async {
+                                    double amount = txnList[index].amount;
                                     await Navigator.pushNamed(
                                       context,
                                       "/addTxn",
                                       arguments: txnList[index],
                                     );
-                                    setState(() {});
+                                    cardDetailsList[txnListIndex].creditUsage =
+                                        await cardService.getCreditUsage(
+                                          cardDetailsList[txnListIndex].cardNum,
+                                          cardDetailsList[txnListIndex]
+                                              .cardLimit,
+                                        );
+                                    setState(() {
+                                      cardDetailsList[txnListIndex]
+                                              .currentAmount +=
+                                          (txnList[index].amount - amount);
+                                    });
                                   },
                                   child: Column(
                                     children: [
