@@ -154,28 +154,46 @@ class _CardPageState extends State<CardPage> {
                       ),
                       PopupMenuItem<Widget>(
                         child: Text('Remove'),
-                        onTap: () async {
-                          if (await dbService.deleteCard(
-                            cardDetailsList[txnListIndex].id,
-                          )) {
-                            AlertService.singleButtonAlertDialog(
-                              "Successfully deleted the card",
-                              true,
-                              context,
-                              () => Navigator.pop(context),
-                            );
-                            cardDetailsList.removeAt(txnListIndex);
-                            setState(() {
-                              txnListIndex = 0;
-                            });
-                          } else {
-                            AlertService.singleButtonAlertDialog(
-                              "Error while deleteing card",
-                              true,
-                              context,
-                              () => Navigator.pop(context),
-                            );
-                          }
+                        onTap: () {
+                          AlertService.twoButtonAlertDialog(
+                            "Are you sure, you want to delete the card?",
+                            true,
+                            context,
+                            "Yes",
+                            () async {
+                              Navigator.pop(context);
+                              final navigator = Navigator.of(context);
+                              if (await dbService.deleteCard(
+                                cardDetailsList[txnListIndex].id,
+                              )) {
+                                AlertService.singleButtonAlertDialog(
+                                  "Successfully deleted the card",
+                                  true,
+                                  context,
+                                  () => navigator.pop(context),
+                                );
+                                cardDetailsList.removeAt(txnListIndex);
+                                txnListIndex = 0;
+                                if (cardDetailsList.isNotEmpty) {
+                                  setState(() {
+                                    txnList =
+                                        cardDetailsList[txnListIndex].txns;
+                                  });
+                                }
+                              } else {
+                                AlertService.singleButtonAlertDialog(
+                                  "Error while deleteing card",
+                                  true,
+                                  context,
+                                  () => Navigator.pop(context),
+                                );
+                              }
+                            },
+                            "No",
+                            () {
+                              Navigator.pop(context);
+                            },
+                          );
                         },
                       ),
                       // ... add more menu items
