@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_card.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/models/response.dart';
@@ -137,6 +138,37 @@ class DBService {
     } catch (error) {
       log("Error while deleting card");
       return false;
+    }
+  }
+
+  Future<Response> getCurrentCashBalance() async {
+    try {
+      List<Map<String, dynamic>> result = await database.rawQuery(
+        """Select Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 1),0) - 
+        Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 0), 0) as currentBalance;""",
+      );
+      return Response.success(responseBody: result[0]["currentBalance"]);
+    } catch (error) {
+      log("Error while fetching cash balance $error");
+      return Response.error();
+    }
+  }
+
+  Future<Response> getRecentCashTxns() async {
+    try {
+      DateTime currentDate = DateTime.now();
+      DateTime startOfMonth = DateTime(currentDate.year, currentDate.month, 1);
+      List<Map<String, dynamic>> maps = await database.query(
+        "transactions",
+        where: "txnType = ? and date >= ?",
+        whereArgs: ["cash", DateFormat("yyyy-MM-dd").format(startOfMonth)],
+      );
+      return Response.success(
+        responseBody: maps.map((map) => TblTransactions.fromMap(map)).toList(),
+      );
+    } catch (error) {
+      log("Error while fetching cash transactions ${error}");
+      return Response.error();
     }
   }
 }

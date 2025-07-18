@@ -1,6 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:my_expense/models/transaction.dart';
+import 'package:flutter/rendering.dart';
+import 'package:my_expense/entity/tbl_transaction.dart';
+import 'package:my_expense/main.dart';
+import 'package:my_expense/models/cash_details.dart';
+import 'package:my_expense/models/response.dart';
 
 class CashPage extends StatefulWidget {
   const CashPage({super.key});
@@ -10,16 +14,40 @@ class CashPage extends StatefulWidget {
 }
 
 class _CashPageState extends State<CashPage> {
-  List<Transaction> transactions = [
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", false, "Amazon", "Shopping"),
-    Transaction("20/12/2024", "1200.00", true, "Bill Payment", "Settlement"),
-  ];
+  bool isFabVisible = true;
+  ScrollController scrollController = ScrollController();
+  CashDetails cashDetails = CashDetails();
+
+  @override
+  void initState() {
+    scrollController.addListener(() {
+      if (scrollController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
+        // scrolling down
+        if (isFabVisible) {
+          setState(() => isFabVisible = false);
+        }
+      } else if (scrollController.position.userScrollDirection ==
+              ScrollDirection.forward ||
+          scrollController.position.atEdge && scrollController.offset == 0) {
+        // scrolling up or at the top
+        if (!isFabVisible) {
+          setState(() => isFabVisible = true);
+        }
+      }
+    });
+    init();
+    super.initState();
+  }
+
+  void init() async {
+    Response response = await cashService.getCashDetails();
+    if (!response.isException) {
+      setState(() {
+        cashDetails = response.responseBody;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +57,31 @@ class _CashPageState extends State<CashPage> {
       //     IconButton(onPressed: () {}, icon: Icon(Icons.more_vert_outlined)),
       //   ],
       // ),
+      floatingActionButton: AnimatedSlide(
+        duration: Duration(milliseconds: 200),
+        offset: isFabVisible ? Offset.zero : Offset(0, 2),
+        child: AnimatedOpacity(
+          duration: Duration(milliseconds: 200),
+          opacity: isFabVisible ? 1.0 : 0.0,
+          child: FloatingActionButton.extended(
+            heroTag: "Cash FAB",
+            onPressed: () async {
+              await Navigator.pushNamed(
+                context,
+                "/addTxn",
+                arguments: TblTransactions.headerInfo(
+                  uniqueId: "",
+                  txnType: "cash",
+                ),
+              );
+              init();
+            },
+            tooltip: "Add Transaction",
+            icon: Icon(Icons.add),
+            label: Text("Add Transaction"),
+          ),
+        ),
+      ),
       body: SafeArea(
         minimum: EdgeInsets.fromLTRB(10, 10, 10, 0),
         child: Column(
@@ -58,7 +111,7 @@ class _CashPageState extends State<CashPage> {
                   ),
                   // SizedBox(height: 10),
                   Text(
-                    "Rs. 25000.00",
+                    "Rs.${cashDetails.currentBalance}",
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 45),
                   ),
                   SizedBox(height: 20),
@@ -82,7 +135,7 @@ class _CashPageState extends State<CashPage> {
                                     ),
                                   ),
                                   Text(
-                                    "Rs. 15000",
+                                    "Rs.${cashDetails.recentSpents}",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 25,
@@ -112,7 +165,7 @@ class _CashPageState extends State<CashPage> {
                                     ),
                                   ),
                                   Text(
-                                    "Rs. 15000",
+                                    "Rs.${cashDetails.recentIncomes}",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 25,
@@ -143,49 +196,133 @@ class _CashPageState extends State<CashPage> {
             ),
             SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: transactions.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    onTap: () {},
-                    title: Text(
-                      transactions[index].merchant,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      transactions[index].category,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Rs.${transactions[index].amount}",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+              child: cashDetails.transactions.isEmpty
+                  ? Center(
+                      child: Text(
+                        "No recent transactions",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
                         ),
-                        Text(transactions[index].date),
-                      ],
-                    ),
-                    leading: Transform.rotate(
-                      angle:
-                          (45 + (transactions[index].isCredit ? 180 : 0)) *
-                          math.pi /
-                          180,
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        color: transactions[index].isCredit
-                            ? Colors.green
-                            : Colors.red,
                       ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      shrinkWrap: true,
+                      itemCount: cashDetails.transactions.length,
+                      itemBuilder: (context, index) {
+                        return ExpansionTile(
+                          title: Text(
+                            cashDetails.transactions[index].merchant,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            cashDetails.transactions[index].category,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                "Rs.${cashDetails.transactions[index].amount}",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(cashDetails.transactions[index].date),
+                            ],
+                          ),
+                          leading: Transform.rotate(
+                            angle:
+                                (45 +
+                                    (cashDetails.transactions[index].isCredit ==
+                                            1
+                                        ? 180
+                                        : 0)) *
+                                math.pi /
+                                180,
+                            child: Icon(
+                              Icons.arrow_back_rounded,
+                              color:
+                                  cashDetails.transactions[index].isCredit == 1
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                          children: [
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    double amount =
+                                        cashDetails.transactions[index].amount;
+                                    await Navigator.pushNamed(
+                                      context,
+                                      "/addTxn",
+                                      arguments:
+                                          cashDetails.transactions[index],
+                                    );
+                                    setState(() {
+                                      cashDetails.currentBalance +=
+                                          (amount -
+                                          cashDetails
+                                              .transactions[index]
+                                              .amount);
+                                    });
+                                    if (cashDetails
+                                            .transactions[index]
+                                            .isCredit ==
+                                        1) {
+                                      cashDetails.recentIncomes +=
+                                          (cashDetails
+                                              .transactions[index]
+                                              .amount -
+                                          amount);
+                                    } else {
+                                      cashDetails.recentSpents +=
+                                          (cashDetails
+                                              .transactions[index]
+                                              .amount -
+                                          amount);
+                                    }
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.edit, size: 22),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "Edit",
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {},
+                                  child: Column(
+                                    children: [
+                                      Icon(Icons.delete, size: 22),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "Delete",
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

@@ -6,6 +6,7 @@ import 'package:my_expense/pages/add_txn_page.dart';
 import 'package:my_expense/pages/home_page.dart';
 import 'package:my_expense/pages/init.dart';
 import 'package:my_expense/services/card_service.dart';
+import 'package:my_expense/services/cash_service.dart';
 import 'package:my_expense/services/db_service.dart';
 import 'package:my_expense/services/txn_service.dart';
 import 'package:my_expense/theme.dart';
@@ -18,6 +19,7 @@ void main() {
 final ThemeController themeController = ThemeController();
 final DBService dbService = DBService();
 late CardService cardService;
+late CashService cashService;
 late TransactionService transactionService;
 
 class App extends StatelessWidget {

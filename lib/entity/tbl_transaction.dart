@@ -68,4 +68,17 @@ class TblTransactions {
       category: map["category"],
     );
   }
+
+  factory TblTransactions.clone(TblTransactions original) {
+    return TblTransactions(
+      id: original.id,
+      amount: original.amount,
+      uniqueId: original.uniqueId,
+      txnType: original.txnType,
+      isCredit: original.isCredit,
+      date: original.date,
+      merchant: original.merchant,
+      category: original.category,
+    );
+  }
 }

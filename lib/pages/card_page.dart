@@ -351,6 +351,7 @@ class _CardPageState extends State<CardPage> {
           duration: Duration(milliseconds: 200),
           opacity: isFabVisible ? 1.0 : 0.0,
           child: FloatingActionButton.extended(
+            heroTag: "Card FAB",
             onPressed: () async {
               await Navigator.pushNamed(
                 context,
