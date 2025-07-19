@@ -171,4 +171,14 @@ class DBService {
       return Response.error();
     }
   }
+
+  Future<bool> deleteTxn(int id) async {
+    try {
+      await database.delete("transactions", where: "id = ?", whereArgs: [id]);
+      return true;
+    } catch (error) {
+      log("Error while deleting transactions $error");
+      return false;
+    }
+  }
 }

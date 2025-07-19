@@ -163,7 +163,7 @@ class _CardPageState extends State<CardPage> {
                             () async {
                               Navigator.pop(context);
                               final navigator = Navigator.of(context);
-                              if (await dbService.deleteCard(
+                              if (await cardService.deleteCard(
                                 cardDetailsList[txnListIndex].id,
                               )) {
                                 AlertService.singleButtonAlertDialog(
@@ -566,7 +566,47 @@ class _CardPageState extends State<CardPage> {
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    AlertService.twoButtonAlertDialog(
+                                      "Are you sure, you want to delete the transaction?",
+                                      true,
+                                      context,
+                                      "Yes",
+                                      () async {
+                                        Navigator.pop(context);
+                                        final navigator = Navigator.of(context);
+                                        if (await transactionService.deleteTxn(
+                                          txnList[index].id as int,
+                                        )) {
+                                          AlertService.singleButtonAlertDialog(
+                                            "Successfully deleted the transaction",
+                                            true,
+                                            context,
+                                            () => navigator.pop(context),
+                                          );
+                                          cardDetailsList[txnListIndex]
+                                                  .currentAmount +=
+                                              (txnList[index].isCredit != 1)
+                                              ? (-txnList[index].amount)
+                                              : txnList[index].amount;
+                                          setState(() {
+                                            txnList.removeAt(index);
+                                          });
+                                        } else {
+                                          AlertService.singleButtonAlertDialog(
+                                            "Error while deleteing transaction",
+                                            true,
+                                            context,
+                                            () => Navigator.pop(context),
+                                          );
+                                        }
+                                      },
+                                      "No",
+                                      () {
+                                        Navigator.pop(context);
+                                      },
+                                    );
+                                  },
                                   child: Column(
                                     children: [
                                       Icon(Icons.delete, size: 22),

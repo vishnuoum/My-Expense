@@ -9,4 +9,8 @@ class TransactionService {
   Future<bool> addTransaction(TblTransactions transactionDetails) async {
     return await dbService.addTransaction(transactionDetails);
   }
+
+  Future<bool> deleteTxn(int id) async {
+    return await dbService.deleteTxn(id);
+  }
 }

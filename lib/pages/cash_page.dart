@@ -5,6 +5,7 @@ import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/models/cash_details.dart';
 import 'package:my_expense/models/response.dart';
+import 'package:my_expense/services/alert_service.dart';
 
 class CashPage extends StatefulWidget {
   const CashPage({super.key});
@@ -304,7 +305,67 @@ class _CashPageState extends State<CashPage> {
                                   ),
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    AlertService.twoButtonAlertDialog(
+                                      "Are you sure, you want to delete the transaction?",
+                                      true,
+                                      context,
+                                      "Yes",
+                                      () async {
+                                        Navigator.pop(context);
+                                        final navigator = Navigator.of(context);
+                                        if (await transactionService.deleteTxn(
+                                          cashDetails.transactions[index].id
+                                              as int,
+                                        )) {
+                                          AlertService.singleButtonAlertDialog(
+                                            "Successfully deleted the transaction",
+                                            true,
+                                            context,
+                                            () => navigator.pop(context),
+                                          );
+                                          if (cashDetails
+                                                  .transactions[index]
+                                                  .isCredit ==
+                                              1) {
+                                            cashDetails.currentBalance -=
+                                                cashDetails
+                                                    .transactions[index]
+                                                    .amount;
+                                            cashDetails.recentIncomes -=
+                                                cashDetails
+                                                    .transactions[index]
+                                                    .amount;
+                                          } else {
+                                            cashDetails.currentBalance +=
+                                                cashDetails
+                                                    .transactions[index]
+                                                    .amount;
+                                            cashDetails.recentSpents -=
+                                                cashDetails
+                                                    .transactions[index]
+                                                    .amount;
+                                          }
+                                          setState(() {
+                                            cashDetails.transactions.removeAt(
+                                              index,
+                                            );
+                                          });
+                                        } else {
+                                          AlertService.singleButtonAlertDialog(
+                                            "Error while deleteing transaction",
+                                            true,
+                                            context,
+                                            () => Navigator.pop(context),
+                                          );
+                                        }
+                                      },
+                                      "No",
+                                      () {
+                                        Navigator.pop(context);
+                                      },
+                                    );
+                                  },
                                   child: Column(
                                     children: [
                                       Icon(Icons.delete, size: 22),
