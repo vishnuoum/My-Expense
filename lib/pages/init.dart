@@ -24,11 +24,12 @@ class _InitPageState extends State<InitPage> {
 
   void init() async {
     log("init SMS");
-    smsService = SmsService();
-    await smsService.requestPermissionsAndInitialize();
 
     if (context.mounted) {
       if (await dbService.initDB()) {
+        smsService = SmsService(dbService: dbService);
+        await smsService.requestPermissionsAndInitialize();
+
         cardService = CardService(dbService: dbService);
         cashService = CashService(dbService: dbService);
         transactionService = TransactionService(dbService: dbService);

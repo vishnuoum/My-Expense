@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_card.dart';
+import 'package:my_expense/entity/tbl_template.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/models/response.dart';
 import 'package:sqflite/sqflite.dart';
@@ -31,6 +32,12 @@ class DBService {
           await db.execute(
             """CREATE TABLE IF NOT EXISTS cards (id INTEGER PRIMARY KEY AUTOINCREMENT,cardNo TEXT UNIQUE,
             cardName TEXT,cardLimit REAL,billDay INTEGER);""",
+          );
+
+          log("Creating sms template table");
+          await db.execute(
+            """CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, template TEXT, amountGroup INTEGER, 
+            txnNatureGroup INTEGER,uniqueIdGroup INTEGER, merchantGroup INTEGER, dateGroup INTEGER)""",
           );
         },
       );
@@ -181,6 +188,18 @@ class DBService {
     } catch (error) {
       log("Error while deleting transactions $error");
       return false;
+    }
+  }
+
+  Future<Response> getTemplates() async {
+    try {
+      List<Map<String, dynamic>> result = await database.query("templates");
+      return Response.success(
+        responseBody: result.map((map) => TblTemplate.fromMap(map)).toList(),
+      );
+    } catch (error) {
+      log("Error while fethcing templates $error");
+      return Response.error();
     }
   }
 }
