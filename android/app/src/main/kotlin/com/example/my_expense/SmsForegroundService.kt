@@ -15,6 +15,8 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 import android.content.Context
 import io.flutter.embedding.engine.FlutterEngineCache
+import android.content.SharedPreferences
+import org.json.JSONArray
 
 class SmsForegroundService : Service() {
 
@@ -75,6 +77,7 @@ class SmsForegroundService : Service() {
     private fun sendToFlutter(message: String) {
         if (!isAppInForeground()) {
             Log.d("SmsForegroundService", "App not in foreground. Skipping Flutter call.")
+            saveSmsToSharedPreferences(message)
             return
         }
         try {
@@ -104,6 +107,24 @@ class SmsForegroundService : Service() {
             }
         }
         return false
+    }
+
+    private fun saveSmsToSharedPreferences(message: String) {
+        val sharedPreferences: SharedPreferences = getSharedPreferences("sms_cache", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+
+        // Get existing messages
+        val existingJson = sharedPreferences.getString("messages", "[]")
+        val jsonArray = JSONArray(existingJson)
+
+        // Add new message
+        jsonArray.put(message)
+
+        // Save updated list
+        editor.putString("messages", jsonArray.toString())
+        editor.apply()
+
+        Log.d("SmsForegroundService", "Message saved to SharedPreferences.")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

@@ -23,12 +23,16 @@ class _InitPageState extends State<InitPage> {
   }
 
   void init() async {
-    initSMS();
+    log("init SMS");
+    smsService = SmsService();
+    await smsService.requestPermissionsAndInitialize();
+
     if (context.mounted) {
       if (await dbService.initDB()) {
         cardService = CardService(dbService: dbService);
         cashService = CashService(dbService: dbService);
         transactionService = TransactionService(dbService: dbService);
+        smsService.syncFromSharedPreference();
         Navigator.pushReplacementNamed(context, "/home");
       } else {
         AlertService.singleButtonAlertDialog(
@@ -41,12 +45,6 @@ class _InitPageState extends State<InitPage> {
         );
       }
     }
-  }
-
-  void initSMS() async {
-    log("init SMS");
-    smsService = SmsService();
-    await smsService.requestPermissionsAndInitialize();
   }
 
   @override

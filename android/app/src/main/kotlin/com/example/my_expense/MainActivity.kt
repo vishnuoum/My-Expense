@@ -11,6 +11,8 @@ import io.flutter.plugin.common.MethodChannel
 import android.util.Log
 import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.embedding.engine.FlutterEngineCache
+import android.content.SharedPreferences
+import android.content.Context
 
 class MainActivity : FlutterActivity() {
     // private val CHANNEL = "sms_channel"
@@ -43,5 +45,13 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         FlutterEngineCache.getInstance().put("main_engine", flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sms_channel").setMethodCallHandler { call, result ->
+            if (call.method == "getCachedSms") {
+                val prefs: SharedPreferences = this.getSharedPreferences("sms_cache", Context.MODE_PRIVATE)
+                val json = prefs.getString("messages", null)
+                result.success(json) // send to Flutter
+            }
+        }
     }
 }

@@ -36,4 +36,23 @@ class SmsService {
 
     log("Listening for messages");
   }
+
+  Future<void> syncFromSharedPreference() async {
+    log("Inside sync method");
+    String? cachedSMS = await getCachedSmsFromNative();
+    log("Cached sms: $cachedSMS");
+  }
+
+  Future<String?> getCachedSmsFromNative() async {
+    const platform = MethodChannel('sms_channel');
+    try {
+      final String? cachedJson = await platform.invokeMethod<String>(
+        'getCachedSms',
+      );
+      return cachedJson;
+    } on PlatformException catch (e) {
+      print("Failed to get SMS from native: ${e.message}");
+      return null;
+    }
+  }
 }
