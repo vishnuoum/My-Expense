@@ -144,10 +144,12 @@ class DBService {
   Future<Response> getCurrentCashBalance() async {
     try {
       List<Map<String, dynamic>> result = await database.rawQuery(
-        """Select Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 1),0) - 
-        Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 0), 0) as currentBalance;""",
+        """Select Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 1),0.0) - 
+        Coalesce((Select sum(amount) from transactions where txnType = 'cash' and isCredit = 0), 0.0) as currentBalance;""",
       );
-      return Response.success(responseBody: result[0]["currentBalance"]);
+      return Response.success(
+        responseBody: result[0]["currentBalance"] as double,
+      );
     } catch (error) {
       log("Error while fetching cash balance $error");
       return Response.error();

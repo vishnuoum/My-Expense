@@ -1,8 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/services/alert_service.dart';
 import 'package:my_expense/services/card_service.dart';
 import 'package:my_expense/services/cash_service.dart';
+import 'package:my_expense/services/sms_service.dart';
 import 'package:my_expense/services/txn_service.dart';
 
 class InitPage extends StatefulWidget {
@@ -15,11 +18,12 @@ class InitPage extends StatefulWidget {
 class _InitPageState extends State<InitPage> {
   @override
   void initState() {
+    init();
     super.initState();
-    initDB();
   }
 
-  void initDB() async {
+  void init() async {
+    initSMS();
     if (context.mounted) {
       if (await dbService.initDB()) {
         cardService = CardService(dbService: dbService);
@@ -37,6 +41,12 @@ class _InitPageState extends State<InitPage> {
         );
       }
     }
+  }
+
+  void initSMS() async {
+    log("init SMS");
+    smsService = SmsService();
+    await smsService.requestPermissionsAndInitialize();
   }
 
   @override
