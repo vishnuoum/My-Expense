@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_template.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
@@ -12,6 +14,7 @@ class SmsService {
   MethodChannel platform = MethodChannel('sms_channel');
 
   DBService dbService;
+  DateFormat dbDateFormat = DateFormat("yyyy-mm-dd");
   SmsService({required this.dbService});
 
   Future<void> requestPermissionsAndInitialize() async {
@@ -39,7 +42,7 @@ class SmsService {
       if (call.method == "onSmsReceived") {
         var message = call.arguments as String;
         log("New SMS logged $message");
-        checkAndUpdateDB(message.toLowerCase());
+        checkAndUpdateDB(message);
       }
     });
 
@@ -49,7 +52,12 @@ class SmsService {
   Future<void> syncFromSharedPreference() async {
     log("Inside sync method");
     String? cachedSMS = await getCachedSmsFromNative();
-    log("Cached sms: $cachedSMS");
+    if (cachedSMS == null) return;
+    List<String> messages = List<String>.from(jsonDecode(cachedSMS));
+    log("Cached sms: $messages");
+    for (String message in messages) {
+      checkAndUpdateDB(message);
+    }
   }
 
   Future<String?> getCachedSmsFromNative() async {
@@ -65,48 +73,54 @@ class SmsService {
     }
   }
 
+  Future<void> deleteCachedMessage() async {
+    const platform = MethodChannel('sms_channel');
+    try {
+      await platform.invokeMethod<String>('deleteCachedSms');
+    } on PlatformException catch (e) {
+      log("Failed to get SMS from native: ${e.message}");
+    }
+  }
+
   Future<void> checkAndUpdateDB(String message) async {
-    if (!message.contains("bank")) return;
+    if (!message.toLowerCase().contains("bank")) return;
 
     Response templateResponse = await getTemplatesFromDB();
     if (templateResponse.isException) return;
     List<TblTemplate> templates = templateResponse.responseBody;
 
     for (TblTemplate template in templates) {
-      final match = template.pattern.firstMatch(message);
-      if (match != null) {
-        Map<String, dynamic> txnMap = {};
-        txnMap["txnType"] = getSmsTxnType(message);
-        txnMap["amount"] = double.tryParse(
-          match.group(template.amountGroup) ?? "",
-        );
-        txnMap["uniqueId"] = match.group(template.uniqueIdGroup);
-        txnMap["date"] = match.group(template.dateGroup);
-        txnMap["merchant"] = match.group(template.merchantGroup);
-        txnMap["txnNature"] = match.group(template.txnNatureGroup);
-        txnMap["isCredit"] = getIsCredit(txnMap["txnNature"]);
+      try {
+        final match = template.pattern.firstMatch(message);
+        if (match != null) {
+          Map<String, dynamic> txnMap = {};
+          txnMap["txnType"] = template.txnType;
+          txnMap["amount"] = double.tryParse(
+            match.group(template.amountGroup) ?? "",
+          );
+          txnMap["uniqueId"] = match.group(template.uniqueIdGroup);
+          String formattedDate = dbDateFormat.format(
+            DateFormat(
+              template.dateFormat,
+            ).parse(match.group(template.dateGroup).toString()),
+          );
+          txnMap["date"] = formattedDate;
+          txnMap["merchant"] = match.group(template.merchantGroup);
+          txnMap["isCredit"] = template.isCredit;
 
-        if (null == txnMap["amount"]) continue;
+          if (null == txnMap["amount"]) continue;
 
-        TblTransactions transaction = TblTransactions.fromMap(txnMap);
-        transactionService.addTransaction(transaction);
+          TblTransactions transaction = TblTransactions.fromMap(txnMap);
+          transactionService.addTransaction(transaction);
+        }
+      } catch (error) {
+        log("Error while parsing message $error");
       }
     }
-  }
-
-  int getIsCredit(String txnNature) {
-    if (txnNature == "credited" || txnNature == "spent") return 1;
-    return 0;
-  }
-
-  String getSmsTxnType(String message) {
-    if (message.contains("credit card") || message.contains("card")) {
-      return "card";
-    }
-    return "cash";
+    await deleteCachedMessage();
   }
 
   Future<Response> getTemplatesFromDB() async {
-    return await dbService.getTemplates();
+    return await templateService.getAllTemplates();
   }
 }

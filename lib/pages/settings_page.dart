@@ -44,6 +44,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
+            ListTile(
+              onTap: () {
+                Navigator.pushNamed(context, "/template");
+              },
+              isThreeLine: false,
+              title: Text(
+                "Add/Edit SMS Templates",
+                style: TextStyle(fontSize: 17),
+              ),
+            ),
           ],
         ),
       ),

@@ -6,6 +6,7 @@ import 'package:my_expense/services/alert_service.dart';
 import 'package:my_expense/services/card_service.dart';
 import 'package:my_expense/services/cash_service.dart';
 import 'package:my_expense/services/sms_service.dart';
+import 'package:my_expense/services/template_service.dart';
 import 'package:my_expense/services/txn_service.dart';
 
 class InitPage extends StatefulWidget {
@@ -33,6 +34,7 @@ class _InitPageState extends State<InitPage> {
         cardService = CardService(dbService: dbService);
         cashService = CashService(dbService: dbService);
         transactionService = TransactionService(dbService: dbService);
+        templateService = TemplateService(dbService: dbService);
         smsService.syncFromSharedPreference();
         Navigator.pushReplacementNamed(context, "/home");
       } else {

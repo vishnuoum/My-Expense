@@ -65,7 +65,7 @@ class TblTransactions {
       isCredit: map["isCredit"],
       date: map["date"],
       merchant: map["merchant"],
-      category: map["category"],
+      category: map["category"] ?? "",
     );
   }
 

@@ -36,8 +36,28 @@ class DBService {
 
           log("Creating sms template table");
           await db.execute(
-            """CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, template TEXT, amountGroup INTEGER, 
-            txnNatureGroup INTEGER,uniqueIdGroup INTEGER, merchantGroup INTEGER, dateGroup INTEGER)""",
+            """CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, patternName TEXT, pattern TEXT, amountGroup INTEGER, 
+            uniqueIdGroup INTEGER, merchantGroup INTEGER, dateGroup INTEGER, isCredit BOOLEAN, txnType TEXT, dateFormat TEXT)""",
+          );
+        },
+        onOpen: (Database db) async {
+          // When opening the db, create the table
+          log("Creating transactions table");
+          await db.execute(
+            """CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            amount REAL,uniqueId TEXT,txnType TEXT, isCredit BOOLEAN, date Date,merchant TEXT,category TEXT);""",
+          );
+
+          log("Creating cards table");
+          await db.execute(
+            """CREATE TABLE IF NOT EXISTS cards (id INTEGER PRIMARY KEY AUTOINCREMENT,cardNo TEXT UNIQUE,
+            cardName TEXT,cardLimit REAL,billDay INTEGER);""",
+          );
+
+          log("Creating sms template table");
+          await db.execute(
+            """CREATE TABLE IF NOT EXISTS templates (id INTEGER PRIMARY KEY AUTOINCREMENT, patternName TEXT, pattern TEXT, amountGroup INTEGER, 
+            uniqueIdGroup INTEGER, merchantGroup INTEGER, dateGroup INTEGER, isCredit BOOLEAN, txnType TEXT, dateFormat TEXT)""",
           );
         },
       );
@@ -191,15 +211,40 @@ class DBService {
     }
   }
 
-  Future<Response> getTemplates() async {
+  Future<Response> getAllTemplates() async {
     try {
       List<Map<String, dynamic>> result = await database.query("templates");
+      log("Template $result");
       return Response.success(
         responseBody: result.map((map) => TblTemplate.fromMap(map)).toList(),
       );
     } catch (error) {
       log("Error while fethcing templates $error");
       return Response.error();
+    }
+  }
+
+  Future<bool> addTemplate(TblTemplate template) async {
+    try {
+      await database.insert(
+        "templates",
+        template.getMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return true;
+    } catch (error) {
+      log("Error while adding the template $error");
+      return false;
+    }
+  }
+
+  Future<bool> deleteTemplate(int id) async {
+    try {
+      await database.delete("templates", where: "id = ?", whereArgs: [id]);
+      return true;
+    } catch (error) {
+      log("Error while deleting template $error");
+      return false;
     }
   }
 }

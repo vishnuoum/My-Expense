@@ -51,6 +51,9 @@ class MainActivity : FlutterActivity() {
                 val prefs: SharedPreferences = this.getSharedPreferences("sms_cache", Context.MODE_PRIVATE)
                 val json = prefs.getString("messages", null)
                 result.success(json) // send to Flutter
+            } else if (call.method == "deleteCachedSms") {
+                val prefs: SharedPreferences = this.getSharedPreferences("sms_cache", Context.MODE_PRIVATE)
+                prefs.edit().remove("messages").apply()
             }
         }
     }

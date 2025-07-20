@@ -65,4 +65,34 @@ class AlertService {
       },
     );
   }
+
+  static void showLoading(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: SizedBox(
+        height: 80,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 50,
+              width: 50,
+              child: CircularProgressIndicator(
+                strokeWidth: 5,
+                valueColor: AlwaysStoppedAnimation(Colors.black),
+              ),
+            ),
+            SizedBox(height: 10),
+            Text("Loading"),
+          ],
+        ),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return PopScope(canPop: false, child: alert);
+      },
+    );
+  }
 }
