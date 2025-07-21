@@ -58,6 +58,7 @@ class SmsService {
     for (String message in messages) {
       checkAndUpdateDB(message);
     }
+    await deleteCachedMessage();
   }
 
   Future<String?> getCachedSmsFromNative() async {
@@ -117,7 +118,6 @@ class SmsService {
         log("Error while parsing message $error");
       }
     }
-    await deleteCachedMessage();
   }
 
   Future<Response> getTemplatesFromDB() async {

@@ -130,6 +130,7 @@ class DBService {
         "transactions",
         where: "txnType = ? and uniqueId = ? and date > ?",
         whereArgs: [txnType, uniqueId, date],
+        orderBy: "id desc",
       );
       log("getTxnDetails: $maps");
       List<TblTransactions> txns = maps
@@ -191,6 +192,7 @@ class DBService {
         "transactions",
         where: "txnType = ? and date >= ?",
         whereArgs: ["cash", DateFormat("yyyy-MM-dd").format(startOfMonth)],
+        orderBy: "id desc",
       );
       return Response.success(
         responseBody: maps.map((map) => TblTransactions.fromMap(map)).toList(),

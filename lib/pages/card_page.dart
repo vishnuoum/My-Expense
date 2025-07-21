@@ -220,12 +220,25 @@ class _CardPageState extends State<CardPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        "Rs.${cardDetails.currentAmount.toStringAsFixed(2)}",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20,
+                      GestureDetector(
+                        onDoubleTap: () async {
+                          int currentCardIndex = txnListIndex;
+                          log("Double tapped $currentCardIndex");
+                          await smsService.syncFromSharedPreference();
+                          await cardService.updateCardDetail(cardDetails);
+                          if (currentCardIndex == txnListIndex) {
+                            setState(() {
+                              txnList = cardDetails.txns;
+                            });
+                          }
+                        },
+                        child: Text(
+                          "Rs.${cardDetails.currentAmount.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                       SizedBox(height: 2),

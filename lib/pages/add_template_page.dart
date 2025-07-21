@@ -235,6 +235,7 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                                   merchantGroup.clear();
                                   uniqueIdGroup.clear();
                                   txnType.clear();
+                                  dateFormat.text = "yyyy-mm-dd";
                                   Navigator.pop(context);
                                 }
                               },
@@ -257,7 +258,7 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                         ),
                       ),
                       child: Text(
-                        widget.template.patternName.isEmpty ? "ADD" : "UPDATE",
+                        isUpdate ? "ADD" : "UPDATE",
                         style: TextStyle(
                           color: Theme.of(context).scaffoldBackgroundColor,
                           fontWeight: FontWeight.bold,

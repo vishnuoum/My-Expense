@@ -23,6 +23,7 @@ class CardService {
     List<CardDetails> cardDetails = await Future.wait(
       (cardResponse.responseBody as List<TblCards>).map((card) async {
         DateTime nextBillDate = getNextBillDate(card.billDay);
+        DateTime now = DateTime.now();
         return CardDetails(
           id: card.id!,
           cardNum: card.cardNo,
@@ -31,28 +32,34 @@ class CardService {
           currentAmount: 0,
           nextBillDate: DateFormat("dd/MM/yyyy").format(nextBillDate),
           billDay: card.billDay,
-          daysToNextBill: nextBillDate.difference(DateTime.now()).inDays,
+          daysToNextBill: nextBillDate
+              .difference(DateTime(now.year, now.month, now.day))
+              .inDays,
         );
       }).toList(),
     );
 
     for (CardDetails cardDetail in cardDetails) {
-      Response txnResponse = await dbService.getTxnDetails(
-        "card",
-        cardDetail.cardNum,
-        getPreviousDate(cardDetail.nextBillDate),
-      );
-      if (txnResponse.isException) continue;
-      cardDetail.txns = (txnResponse.responseBody as List<TblTransactions>);
-      cardDetail.currentAmount = getCurrentAmount(cardDetail.txns);
-
-      cardDetail.creditUsage = await getCreditUsage(
-        cardDetail.cardNum,
-        cardDetail.cardLimit,
-      );
+      await updateCardDetail(cardDetail);
     }
 
     return Response.success(responseBody: cardDetails);
+  }
+
+  Future<void> updateCardDetail(CardDetails cardDetail) async {
+    Response txnResponse = await dbService.getTxnDetails(
+      "card",
+      cardDetail.cardNum,
+      getPreviousDate(cardDetail.nextBillDate),
+    );
+    if (txnResponse.isException) return;
+    cardDetail.txns = (txnResponse.responseBody as List<TblTransactions>);
+    cardDetail.currentAmount = getCurrentAmount(cardDetail.txns);
+
+    cardDetail.creditUsage = await getCreditUsage(
+      cardDetail.cardNum,
+      cardDetail.cardLimit,
+    );
   }
 
   DateTime getNextBillDate(int billDay) {

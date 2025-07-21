@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -41,7 +42,7 @@ class _CashPageState extends State<CashPage> {
     super.initState();
   }
 
-  void init() async {
+  Future<void> init() async {
     Response response = await cashService.getCashDetails();
     if (!response.isException) {
       setState(() {
@@ -111,9 +112,19 @@ class _CashPageState extends State<CashPage> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   // SizedBox(height: 10),
-                  Text(
-                    "Rs.${cashDetails.currentBalance}",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 45),
+                  GestureDetector(
+                    onDoubleTap: () async {
+                      log("Double tapped current balance");
+                      await smsService.syncFromSharedPreference();
+                      await init();
+                    },
+                    child: Text(
+                      "Rs.${cashDetails.currentBalance}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 45,
+                      ),
+                    ),
                   ),
                   SizedBox(height: 20),
                   Expanded(
