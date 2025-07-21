@@ -94,17 +94,18 @@ class DBService {
     }
   }
 
-  Future<bool> addTransaction(TblTransactions transaction) async {
+  Future<Response> addTransaction(TblTransactions transaction) async {
     try {
-      await database.insert(
-        "transactions",
-        transaction.getMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+      return Response.success(
+        responseBody: await database.insert(
+          "transactions",
+          transaction.getMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        ),
       );
-      return true;
     } catch (error) {
       log("addTransaction() failed: $error");
-      return false;
+      return Response.error();
     }
   }
 
@@ -226,17 +227,18 @@ class DBService {
     }
   }
 
-  Future<bool> addTemplate(TblTemplate template) async {
+  Future<Response> addTemplate(TblTemplate template) async {
     try {
-      await database.insert(
-        "templates",
-        template.getMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+      return Response.success(
+        responseBody: await database.insert(
+          "templates",
+          template.getMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        ),
       );
-      return true;
     } catch (error) {
       log("Error while adding the template $error");
-      return false;
+      return Response.error();
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
+import 'package:my_expense/models/response.dart';
 import 'package:my_expense/services/alert_service.dart';
 
 class AddTxnPage extends StatefulWidget {
@@ -25,9 +26,12 @@ class _AddTxnPageState extends State<AddTxnPage> {
 
   List<TblTransactions> addedTxns = [];
 
+  bool isEdit = false;
+
   @override
   void initState() {
     transactionDetails = widget.transactionDetails;
+    isEdit = transactionDetails.merchant.isNotEmpty;
     billDate = TextEditingController(
       text: transactionDetails.date.isNotEmpty
           ? dateFormat.format(
@@ -87,6 +91,68 @@ class _AddTxnPageState extends State<AddTxnPage> {
     );
   }
 
+  Container getDropDown() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15, top: 10),
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.grey[200],
+      ),
+      child: DropdownButtonFormField<int>(
+        value:
+            widget.transactionDetails.isCredit, // your current selected value
+        items: [
+          DropdownMenuItem<int>(value: 0, child: Text("Spent/Debit")),
+          DropdownMenuItem<int>(value: 1, child: Text("Credit")),
+        ],
+        onChanged: (int? newValue) {
+          setState(() {
+            widget.transactionDetails.isCredit = newValue!;
+          });
+        },
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: "Select Transaction",
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+        dropdownColor: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.white,
+      ),
+    );
+  }
+
+  Container getFormField({
+    required TextEditingController controller,
+    required String hintText,
+    TextInputType textInputType = TextInputType.text,
+    int? maxLines = 1,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15, top: 10),
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.grey[200],
+      ),
+      child: TextFormField(
+        maxLines: maxLines,
+        keyboardType: textInputType,
+        controller: controller,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -141,76 +207,23 @@ class _AddTxnPageState extends State<AddTxnPage> {
                   ),
                   SizedBox(height: 15),
                   Text("Amount"),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: themeController.value == ThemeMode.dark
-                          ? Colors.grey[900]
-                          : Colors.grey[200],
-                    ),
-                    child: TextFormField(
-                      controller: amount,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter Transaction Amount",
-                        hintStyle: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ),
+                  getFormField(
+                    controller: amount,
+                    hintText: "Enter Transaction Amount",
+                    textInputType: TextInputType.number,
                   ),
-                  SizedBox(height: 15),
-
                   Text("Merchant"),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: themeController.value == ThemeMode.dark
-                          ? Colors.grey[900]
-                          : Colors.grey[200],
-                    ),
-                    child: TextFormField(
-                      controller: merchant,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter Merchant",
-                        hintStyle: TextStyle(color: Colors.grey[500]),
-                      ),
-                      buildCounter:
-                          (
-                            BuildContext context, {
-                            required int currentLength,
-                            required bool isFocused,
-                            required int? maxLength,
-                          }) {
-                            return null; // Completely hides the counter widget
-                          },
-                    ),
+                  getFormField(
+                    controller: merchant,
+                    hintText: "Enter Merchant",
                   ),
-                  SizedBox(height: 15),
                   Text("Category"),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: themeController.value == ThemeMode.dark
-                          ? Colors.grey[900]
-                          : Colors.grey[200],
-                    ),
-                    child: TextFormField(
-                      controller: category,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Enter Category",
-                        hintStyle: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ),
+                  getFormField(
+                    controller: category,
+                    hintText: "Enter Category",
                   ),
-                  SizedBox(height: 15),
+                  Text("Transaction Type"),
+                  getDropDown(),
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
@@ -239,7 +252,6 @@ class _AddTxnPageState extends State<AddTxnPage> {
                             () => Navigator.pop(context),
                           );
                         } else {
-                          bool isEdit = transactionDetails.merchant.isNotEmpty;
                           showLoading(context);
                           transactionDetails.amount = double.parse(txnAmount);
                           transactionDetails.category = txnCategory;
@@ -247,9 +259,11 @@ class _AddTxnPageState extends State<AddTxnPage> {
                             "yyyy-MM-dd",
                           ).format(dateFormat.parse(txnDate));
                           transactionDetails.merchant = txnMerchant;
-                          if (await transactionService.addTransaction(
-                            transactionDetails,
-                          )) {
+                          Response dbResponse = await transactionService
+                              .addTransaction(transactionDetails);
+                          if (!dbResponse.isException) {
+                            transactionDetails.id =
+                                dbResponse.responseBody as int;
                             Navigator.pop(context);
                             AlertService.singleButtonAlertDialog(
                               "Transaction ${isEdit ? "Updated" : "Added"} Successfully",
@@ -258,10 +272,7 @@ class _AddTxnPageState extends State<AddTxnPage> {
                               () {
                                 Navigator.pop(context);
                                 if (isEdit) {
-                                  Navigator.popUntil(
-                                    context,
-                                    ModalRoute.withName('/home'),
-                                  );
+                                  Navigator.pop(context, transactionDetails);
                                 }
                               },
                             );
@@ -289,7 +300,7 @@ class _AddTxnPageState extends State<AddTxnPage> {
                         ),
                       ),
                       child: Text(
-                        transactionDetails.merchant.isEmpty ? "ADD" : "UPDATE",
+                        !isEdit ? "ADD" : "UPDATE",
                         style: TextStyle(
                           color: Theme.of(context).scaffoldBackgroundColor,
                           fontWeight: FontWeight.bold,

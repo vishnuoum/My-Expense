@@ -47,7 +47,7 @@ class TblTemplate {
       merchantGroup: 0,
       dateGroup: 0,
       isCredit: 0,
-      txnType: "",
+      txnType: "cash",
       dateFormat: "",
     );
   }

@@ -1,4 +1,5 @@
 import 'package:my_expense/entity/tbl_transaction.dart';
+import 'package:my_expense/models/response.dart';
 import 'package:my_expense/services/db_service.dart';
 
 class TransactionService {
@@ -6,7 +7,7 @@ class TransactionService {
 
   TransactionService({required this.dbService});
 
-  Future<bool> addTransaction(TblTransactions transactionDetails) async {
+  Future<Response> addTransaction(TblTransactions transactionDetails) async {
     return await dbService.addTransaction(transactionDetails);
   }
 

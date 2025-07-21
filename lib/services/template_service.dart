@@ -7,7 +7,7 @@ class TemplateService {
 
   TemplateService({required this.dbService});
 
-  Future<bool> addTemplate(TblTemplate template) async {
+  Future<Response> addTemplate(TblTemplate template) async {
     return await dbService.addTemplate(template);
   }
 

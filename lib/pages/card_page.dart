@@ -144,12 +144,21 @@ class _CardPageState extends State<CardPage> {
                       PopupMenuItem<Widget>(
                         child: Text('Edit'),
                         onTap: () async {
-                          await Navigator.pushNamed(
+                          final result = await Navigator.pushNamed(
                             context,
                             "/addCard",
                             arguments: cardDetailsList[txnListIndex],
                           );
-                          setState(() {});
+                          if (result != null && result is CardDetails) {
+                            cardDetailsList[txnListIndex].creditUsage =
+                                await cardService.getCreditUsage(
+                                  cardDetailsList[txnListIndex].cardNum,
+                                  cardDetailsList[txnListIndex].cardLimit,
+                                );
+                            setState(() {
+                              cardDetailsList[txnListIndex] = result;
+                            });
+                          }
                         },
                       ),
                       PopupMenuItem<Widget>(
@@ -366,7 +375,7 @@ class _CardPageState extends State<CardPage> {
           child: FloatingActionButton.extended(
             heroTag: "Card FAB",
             onPressed: () async {
-              await Navigator.pushNamed(
+              final result = await Navigator.pushNamed(
                 context,
                 "/addTxn",
                 arguments: TblTransactions.headerInfo(
@@ -374,7 +383,17 @@ class _CardPageState extends State<CardPage> {
                   txnType: "card",
                 ),
               );
-              init();
+              if (result != null && result is List<TblTransactions>) {
+                cardDetailsList[txnListIndex].creditUsage = await cardService
+                    .getCreditUsage(
+                      cardDetailsList[txnListIndex].cardNum,
+                      cardDetailsList[txnListIndex].cardLimit,
+                    );
+                setState(() {
+                  cardDetailsList[txnListIndex].txns.insertAll(0, result);
+                });
+              }
+              // init();
             },
             tooltip: "Add Transaction",
             icon: Icon(Icons.add),
@@ -549,22 +568,28 @@ class _CardPageState extends State<CardPage> {
                                 GestureDetector(
                                   onTap: () async {
                                     double amount = txnList[index].amount;
-                                    await Navigator.pushNamed(
+                                    final result = await Navigator.pushNamed(
                                       context,
                                       "/addTxn",
                                       arguments: txnList[index],
                                     );
-                                    cardDetailsList[txnListIndex].creditUsage =
-                                        await cardService.getCreditUsage(
-                                          cardDetailsList[txnListIndex].cardNum,
-                                          cardDetailsList[txnListIndex]
-                                              .cardLimit,
-                                        );
-                                    setState(() {
+                                    if (result != null &&
+                                        result is TblTransactions) {
                                       cardDetailsList[txnListIndex]
-                                              .currentAmount +=
-                                          (txnList[index].amount - amount);
-                                    });
+                                          .creditUsage = await cardService
+                                          .getCreditUsage(
+                                            cardDetailsList[txnListIndex]
+                                                .cardNum,
+                                            cardDetailsList[txnListIndex]
+                                                .cardLimit,
+                                          );
+                                      setState(() {
+                                        txnList[index] = result;
+                                        cardDetailsList[txnListIndex]
+                                                .currentAmount +=
+                                            (txnList[index].amount - amount);
+                                      });
+                                    }
                                   },
                                   child: Column(
                                     children: [

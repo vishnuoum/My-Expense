@@ -273,34 +273,38 @@ class _CashPageState extends State<CashPage> {
                                   onTap: () async {
                                     double amount =
                                         cashDetails.transactions[index].amount;
-                                    await Navigator.pushNamed(
+                                    final result = await Navigator.pushNamed(
                                       context,
                                       "/addTxn",
                                       arguments:
                                           cashDetails.transactions[index],
                                     );
-                                    setState(() {
-                                      cashDetails.currentBalance +=
-                                          (amount -
-                                          cashDetails
+                                    if (result != null &&
+                                        result is TblTransactions) {
+                                      cashDetails.transactions[index] = result;
+                                      setState(() {
+                                        cashDetails.currentBalance +=
+                                            (amount -
+                                            cashDetails
+                                                .transactions[index]
+                                                .amount);
+                                      });
+                                      if (cashDetails
                                               .transactions[index]
-                                              .amount);
-                                    });
-                                    if (cashDetails
-                                            .transactions[index]
-                                            .isCredit ==
-                                        1) {
-                                      cashDetails.recentIncomes +=
-                                          (cashDetails
-                                              .transactions[index]
-                                              .amount -
-                                          amount);
-                                    } else {
-                                      cashDetails.recentSpents +=
-                                          (cashDetails
-                                              .transactions[index]
-                                              .amount -
-                                          amount);
+                                              .isCredit ==
+                                          1) {
+                                        cashDetails.recentIncomes +=
+                                            (cashDetails
+                                                .transactions[index]
+                                                .amount -
+                                            amount);
+                                      } else {
+                                        cashDetails.recentSpents +=
+                                            (cashDetails
+                                                .transactions[index]
+                                                .amount -
+                                            amount);
+                                      }
                                     }
                                   },
                                   child: Column(

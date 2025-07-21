@@ -24,9 +24,12 @@ class _AddCardPageState extends State<AddCardPage> {
   late TextEditingController cardNo;
   final RegExp dayRegex = RegExp(r'^(0?[1-9]|[12][0-9]|3[01])$');
 
+  bool isNew = false;
+
   @override
   void initState() {
     cardDetails = widget.cardDetails;
+    isNew = cardDetails.cardNum.isEmpty;
     billDay = TextEditingController(
       text: cardDetails.billDay == 0 ? "" : cardDetails.billDay.toString(),
     );
@@ -259,7 +262,6 @@ class _AddCardPageState extends State<AddCardPage> {
                             },
                           );
                         } else {
-                          bool isNew = cardDetails.cardNum.isEmpty;
                           showLoading(context);
                           TblCards card = TblCards(
                             cardNo: num,
@@ -312,7 +314,7 @@ class _AddCardPageState extends State<AddCardPage> {
                         ),
                       ),
                       child: Text(
-                        widget.cardDetails.cardNum.isEmpty ? "ADD" : "UPDATE",
+                        isNew ? "ADD" : "UPDATE",
                         style: TextStyle(
                           color: Theme.of(context).scaffoldBackgroundColor,
                           fontWeight: FontWeight.bold,

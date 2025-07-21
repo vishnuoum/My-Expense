@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_expense/entity/tbl_template.dart';
 import 'package:my_expense/main.dart';
+import 'package:my_expense/models/response.dart';
 import 'package:my_expense/services/alert_service.dart';
 
 class AddTemplatePage extends StatefulWidget {
@@ -19,9 +20,7 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
   late TextEditingController dateGroup;
   late TextEditingController uniqueIdGroup;
   late TextEditingController merchantGroup;
-  late TextEditingController txnType;
   late TextEditingController dateFormat;
-  late int isCredit = 0;
   bool isUpdate = false;
   List<TblTemplate> templateList = [];
 
@@ -63,9 +62,6 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
           ? ""
           : widget.template.merchantGroup.toString(),
     );
-    txnType = TextEditingController(
-      text: widget.template.txnType.isEmpty ? "" : widget.template.txnType,
-    );
     dateFormat = TextEditingController(
       text: widget.template.dateFormat.isEmpty
           ? "yyyy-mm-dd"
@@ -85,7 +81,7 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: themeController.value == ThemeMode.dark
-            ? Colors.grey[800]
+            ? Colors.grey[900]
             : Colors.grey[200],
       ),
       child: TextFormField(
@@ -97,6 +93,72 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey[500]),
         ),
+      ),
+    );
+  }
+
+  Container getDropDown() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15, top: 10),
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.grey[200],
+      ),
+      child: DropdownButtonFormField<int>(
+        value: widget.template.isCredit, // your current selected value
+        items: [
+          DropdownMenuItem<int>(value: 0, child: Text("Spent/Debit")),
+          DropdownMenuItem<int>(value: 1, child: Text("Credit")),
+        ],
+        onChanged: (int? newValue) {
+          setState(() {
+            widget.template.isCredit = newValue!;
+          });
+        },
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: "Select Transaction",
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+        dropdownColor: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.white,
+      ),
+    );
+  }
+
+  Container getCashCardDropDown() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 15, top: 10),
+      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.grey[200],
+      ),
+      child: DropdownButtonFormField<String>(
+        value: widget.template.txnType, // your current selected value
+        items: [
+          DropdownMenuItem<String>(value: "card", child: Text("Card")),
+          DropdownMenuItem<String>(value: "cash", child: Text("Cash")),
+        ],
+        onChanged: (String? newValue) {
+          setState(() {
+            widget.template.txnType = newValue!;
+          });
+        },
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: "Select Transaction",
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+        dropdownColor: themeController.value == ThemeMode.dark
+            ? Colors.grey[900]
+            : Colors.white,
       ),
     );
   }
@@ -165,11 +227,10 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                     hintText: "Enter UniqueId Group",
                     textInputType: TextInputType.number,
                   ),
-                  Text("Transaction Type"),
-                  getFormField(
-                    controller: txnType,
-                    hintText: "Enter Transaction Type",
-                  ),
+                  Text("Transaction Mode"),
+                  getCashCardDropDown(),
+                  Text("Select Transaction Type"),
+                  getDropDown(),
                   Text("Date Format"),
                   getFormField(
                     controller: dateFormat,
@@ -185,7 +246,6 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                             dateGroup.text.isEmpty ||
                             merchantGroup.text.isEmpty ||
                             uniqueIdGroup.text.isEmpty ||
-                            txnType.text.isEmpty ||
                             dateFormat.text.isEmpty) {
                           AlertService.singleButtonAlertDialog(
                             "Please complete the form!!",
@@ -199,27 +259,26 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                             amountGroup.text,
                           );
                           widget.template.dateGroup = int.parse(dateGroup.text);
-                          widget.template.isCredit = isCredit;
                           widget.template.merchantGroup = int.parse(
                             merchantGroup.text,
                           );
                           widget.template.pattern = RegExp(pattern.text);
                           widget.template.patternName = patternName.text;
-                          widget.template.txnType = txnType.text;
                           widget.template.uniqueIdGroup = int.parse(
                             uniqueIdGroup.text,
                           );
                           widget.template.dateFormat = dateFormat.text;
-                          bool insertStatus = await templateService.addTemplate(
-                            widget.template,
-                          );
+                          Response dbResponse = await templateService
+                              .addTemplate(widget.template);
                           Navigator.pop(context);
-                          if (insertStatus) {
+                          if (!dbResponse.isException) {
                             AlertService.singleButtonAlertDialog(
                               "Successfully saved the template details.",
                               true,
                               context,
                               () {
+                                widget.template.id =
+                                    dbResponse.responseBody as int;
                                 if (isUpdate) {
                                   Navigator.pop(context);
                                   Navigator.pop(context, widget.template);
@@ -234,7 +293,6 @@ class _AddTemplatePageState extends State<AddTemplatePage> {
                                   dateGroup.clear();
                                   merchantGroup.clear();
                                   uniqueIdGroup.clear();
-                                  txnType.clear();
                                   dateFormat.text = "yyyy-mm-dd";
                                   Navigator.pop(context);
                                 }
