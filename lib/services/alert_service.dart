@@ -95,4 +95,16 @@ class AlertService {
       },
     );
   }
+
+  static Future<DateTime?> selectDate(
+    BuildContext context,
+    DateTime selectedDate,
+  ) async {
+    return (await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2022),
+      lastDate: DateTime.now(),
+    ));
+  }
 }

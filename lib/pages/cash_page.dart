@@ -6,6 +6,7 @@ import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/models/cash_details.dart';
 import 'package:my_expense/models/response.dart';
+import 'package:my_expense/models/transaction_listing_details.dart';
 import 'package:my_expense/services/alert_service.dart';
 
 class CashPage extends StatefulWidget {
@@ -197,13 +198,38 @@ class _CashPageState extends State<CashPage> {
             ),
             SizedBox(height: 30),
             Padding(
-              padding: EdgeInsets.only(left: 10),
-              child: Text(
-                "Recent Transactions",
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.only(left: 10, right: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Recent Transactions",
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        "/allTransactions",
+                        arguments: TransactionListingDetails(
+                          header: "Cash Transactions",
+                          uniqueId: "%%",
+                          txnType: "cash",
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "View All",
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 20),

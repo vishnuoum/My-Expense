@@ -5,6 +5,7 @@ import 'package:my_expense/entity/tbl_card.dart';
 import 'package:my_expense/entity/tbl_template.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/models/response.dart';
+import 'package:my_expense/models/transaction_listing_details.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DBService {
@@ -140,6 +141,36 @@ class DBService {
       return Response.success(responseBody: txns);
     } catch (error) {
       log("Error while fetching cards $error");
+      return Response.error();
+    }
+  }
+
+  Future<Response> getAllTransactionsWithinRange(
+    TransactionListingDetails transactionDetails,
+  ) async {
+    try {
+      List<Map<String, dynamic>> result = await database.query(
+        "transactions",
+        where: "uniqueId like ? and txnType = ? and date BETWEEN ? and ? ",
+        whereArgs: [
+          transactionDetails.uniqueId,
+          transactionDetails.txnType,
+          transactionDetails.from,
+          transactionDetails.to,
+        ],
+      );
+      log(
+        "Transaction within range ${transactionDetails.from} - ${transactionDetails.to} $result",
+      );
+      return Response.success(
+        responseBody: result
+            .map((item) => TblTransactions.fromMap(item))
+            .toList(),
+      );
+    } catch (error) {
+      log(
+        "Error while fethcing all transactions within range ${transactionDetails.from} - ${transactionDetails.to} $error",
+      );
       return Response.error();
     }
   }

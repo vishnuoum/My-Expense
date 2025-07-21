@@ -8,6 +8,7 @@ import 'package:my_expense/entity/tbl_transaction.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/models/card_details.dart';
 import 'package:my_expense/models/response.dart';
+import 'package:my_expense/models/transaction_listing_details.dart';
 import 'package:my_expense/scroll_behavior/stretch_scroll_behavior.dart';
 import 'package:my_expense/services/alert_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -495,13 +496,40 @@ class _CardPageState extends State<CardPage> {
             ),
             SizedBox(height: 20),
             Padding(
-              padding: EdgeInsets.only(left: 10),
-              child: Text(
-                "Recent Transactions",
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.only(left: 10, right: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Recent Transactions",
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        "/allTransactions",
+                        arguments: TransactionListingDetails(
+                          header:
+                              "Transactions of *${cardDetailsList[txnListIndex].cardNum}",
+                          uniqueId:
+                              "%${cardDetailsList[txnListIndex].cardNum}%",
+                          txnType: "card",
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "View All",
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 20),
