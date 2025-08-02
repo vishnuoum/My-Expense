@@ -14,7 +14,7 @@ class SmsService {
   MethodChannel platform = MethodChannel('sms_channel');
 
   DBService dbService;
-  DateFormat dbDateFormat = DateFormat("yyyy-mm-dd");
+  DateFormat dbDateFormat = DateFormat("yyyy-MM-dd");
   SmsService({required this.dbService});
 
   Future<void> requestPermissionsAndInitialize() async {
@@ -97,13 +97,15 @@ class SmsService {
           Map<String, dynamic> txnMap = {};
           txnMap["txnType"] = template.txnType;
           txnMap["amount"] = double.tryParse(
-            match.group(template.amountGroup) ?? "",
+            (match.group(template.amountGroup) ?? "").replaceAll(",", ""),
           );
           txnMap["uniqueId"] = match.group(template.uniqueIdGroup);
+          String dateText = match.group(template.dateGroup).toString();
+          if (template.dateFormat.contains("MMM")) {
+            dateText = makeDateParsable(dateText);
+          }
           String formattedDate = dbDateFormat.format(
-            DateFormat(
-              template.dateFormat,
-            ).parse(match.group(template.dateGroup).toString()),
+            DateFormat(template.dateFormat).parse(dateText),
           );
           txnMap["date"] = formattedDate;
           txnMap["merchant"] = match.group(template.merchantGroup);
@@ -122,5 +124,12 @@ class SmsService {
 
   Future<Response> getTemplatesFromDB() async {
     return await templateService.getAllTemplates();
+  }
+
+  String makeDateParsable(String dateText) {
+    List<String> date = dateText.split("-");
+    if (date.length != 3) return dateText;
+    date[1] = date[1][0].toUpperCase() + date[1].substring(1).toLowerCase();
+    return date.join("-");
   }
 }

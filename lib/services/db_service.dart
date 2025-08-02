@@ -132,7 +132,7 @@ class DBService {
         "transactions",
         where: "txnType = ? and uniqueId = ? and date > ?",
         whereArgs: [txnType, uniqueId, date],
-        orderBy: "id desc",
+        orderBy: "date desc, id desc",
       );
       log("getTxnDetails: $maps");
       List<TblTransactions> txns = maps
@@ -151,13 +151,14 @@ class DBService {
     try {
       List<Map<String, dynamic>> result = await database.query(
         "transactions",
-        where: "uniqueId like ? and txnType = ? and date BETWEEN ? and ? ",
+        where: "uniqueId like ? and txnType = ?",
         whereArgs: [
           transactionDetails.uniqueId,
           transactionDetails.txnType,
-          transactionDetails.from,
-          transactionDetails.to,
+          // transactionDetails.from,
+          // transactionDetails.to,
         ],
+        orderBy: "date desc",
       );
       log(
         "Transaction within range ${transactionDetails.from} - ${transactionDetails.to} $result",
@@ -224,7 +225,7 @@ class DBService {
         "transactions",
         where: "txnType = ? and date >= ?",
         whereArgs: ["cash", DateFormat("yyyy-MM-dd").format(startOfMonth)],
-        orderBy: "id desc",
+        orderBy: "date desc, id desc",
       );
       return Response.success(
         responseBody: maps.map((map) => TblTransactions.fromMap(map)).toList(),

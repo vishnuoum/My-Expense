@@ -120,7 +120,7 @@ class _CashPageState extends State<CashPage> {
                       await init();
                     },
                     child: Text(
-                      "Rs.${cashDetails.currentBalance}",
+                      "Rs.${cashDetails.currentBalance.toStringAsFixed(2)}",
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 45,
@@ -148,7 +148,7 @@ class _CashPageState extends State<CashPage> {
                                     ),
                                   ),
                                   Text(
-                                    "Rs.${cashDetails.recentSpents}",
+                                    "Rs.${cashDetails.recentSpents.toStringAsFixed(2)}",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 25,
@@ -178,7 +178,7 @@ class _CashPageState extends State<CashPage> {
                                     ),
                                   ),
                                   Text(
-                                    "Rs.${cashDetails.recentIncomes}",
+                                    "Rs.${cashDetails.recentIncomes.toStringAsFixed(2)}",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 25,
@@ -263,7 +263,7 @@ class _CashPageState extends State<CashPage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                "Rs.${cashDetails.transactions[index].amount}",
+                                "Rs.${cashDetails.transactions[index].amount.toStringAsFixed(2)}",
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
