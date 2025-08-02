@@ -10,6 +10,7 @@ import 'package:my_expense/pages/all_txn_page.dart';
 import 'package:my_expense/pages/home_page.dart';
 import 'package:my_expense/pages/init.dart';
 import 'package:my_expense/pages/template_page.dart';
+import 'package:my_expense/services/analytics_service.dart';
 import 'package:my_expense/services/card_service.dart';
 import 'package:my_expense/services/cash_service.dart';
 import 'package:my_expense/services/db_service.dart';
@@ -31,6 +32,7 @@ late CashService cashService;
 late SmsService smsService;
 late TemplateService templateService;
 late TransactionService transactionService;
+late AnalyticsService analyticsService;
 
 class App extends StatelessWidget {
   @override

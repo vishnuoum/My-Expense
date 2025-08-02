@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:my_expense/main.dart';
 import 'package:my_expense/services/alert_service.dart';
+import 'package:my_expense/services/analytics_service.dart';
 import 'package:my_expense/services/card_service.dart';
 import 'package:my_expense/services/cash_service.dart';
 import 'package:my_expense/services/sms_service.dart';
@@ -35,6 +36,7 @@ class _InitPageState extends State<InitPage> {
         cashService = CashService(dbService: dbService);
         transactionService = TransactionService(dbService: dbService);
         templateService = TemplateService(dbService: dbService);
+        analyticsService = AnalyticsService(dbService: dbService);
         smsService.syncFromSharedPreference();
         Navigator.pushReplacementNamed(context, "/home");
       } else {

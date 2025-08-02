@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:my_expense/entity/tbl_card.dart';
 import 'package:my_expense/entity/tbl_template.dart';
 import 'package:my_expense/entity/tbl_transaction.dart';
+import 'package:my_expense/models/cash_card_analytics_details.dart';
 import 'package:my_expense/models/response.dart';
 import 'package:my_expense/models/transaction_listing_details.dart';
 import 'package:sqflite/sqflite.dart';
@@ -281,6 +282,39 @@ class DBService {
     } catch (error) {
       log("Error while deleting template $error");
       return false;
+    }
+  }
+
+  Future<Response> getCurrentMonthCashCardAnalytics() async {
+    try {
+      List<Map<String, dynamic>> map = await database.rawQuery("""
+      WITH RECURSIVE
+      dates(day) AS (
+        SELECT date('now', 'start of month')
+        UNION ALL
+        SELECT date(day, '+1 day')
+        FROM dates
+        WHERE day < date('now', 'start of month', '+1 month', '-1 day')
+      )
+      SELECT
+        d.day AS date,
+        ROUND(IFNULL(SUM(CASE WHEN t.txnType = 'cash' THEN t.amount END), 0.0),2) AS cashTotal,
+        ROUND(IFNULL(SUM(CASE WHEN t.txnType = 'card' THEN t.amount END), 0.0),2) AS cardTotal
+      FROM dates d
+      LEFT JOIN transactions t
+        ON t.date = d.day
+      GROUP BY d.day
+      ORDER BY d.day;
+      """);
+      log("$map");
+      return Response.success(
+        responseBody: map
+            .map((element) => CashCardAnalyticsDetails.fromMap(element))
+            .toList(),
+      );
+    } catch (error) {
+      log("Error while getCurrentMonthCashCardAnalytics $error");
+      return Response.error();
     }
   }
 }
