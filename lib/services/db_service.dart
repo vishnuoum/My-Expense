@@ -311,7 +311,8 @@ class DBService {
         ROUND(IFNULL(SUM(CASE WHEN t.txnType = 'card' THEN t.amount END), 0.0), 2) AS cardTotal
       FROM dates d
       LEFT JOIN transactions t
-        ON t.date = d.day AND isCredit = 0
+        ON t.date = d.day AND isCredit = 0 AND (t.txnType = 'cash' OR (t.txnType = 'card' 
+       AND t.uniqueId IN (SELECT DISTINCT cardNo FROM cards)))
       GROUP BY d.day
       ORDER BY d.day;
     """);
@@ -345,7 +346,8 @@ class DBService {
       FROM months
       LEFT JOIN transactions t
         ON CAST(strftime('%m', t.date) AS INTEGER) = m
-       AND strftime('%Y', t.date) = '$year' AND isCredit = 0
+       AND strftime('%Y', t.date) = '$year' AND t.isCredit = 0 AND (t.txnType = 'cash' OR (t.txnType = 'card' 
+       AND t.uniqueId IN (SELECT DISTINCT cardNo FROM cards)))
       GROUP BY m
       ORDER BY m;
     """);
@@ -378,16 +380,18 @@ class DBService {
           AND strftime('%Y', date) = ?
           AND strftime('%m', date) = ?
           AND txnType = ?
+          AND (txnType != 'card' OR uniqueId IN (SELECT DISTINCT cardNo from cards))
       )
       SELECT 
         category,
         ROUND(SUM(amount), 2) AS totalSpent,
-        ROUND((SUM(amount)) / (SELECT total FROM total_spent), 2) AS percentage
+        ROUND(SUM(amount) / (SELECT total FROM total_spent), 2) AS percentage
       FROM transactions
       WHERE isCredit = 0
         AND strftime('%Y', date) = ?
         AND strftime('%m', date) = ?
         AND txnType = ?
+        AND (txnType != 'card' OR uniqueId IN (SELECT DISTINCT cardNo from cards))
       GROUP BY category
       ORDER BY totalSpent DESC
       LIMIT 5;

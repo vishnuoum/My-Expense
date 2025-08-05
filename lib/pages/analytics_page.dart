@@ -104,7 +104,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   void fetchFromDB() {
-    DateTime now = DateTime.now();
     fetchMonthlyBarGraphDetailsFromDB(
       month: monthlyBarMonth,
       year: monthlyBarYear,
